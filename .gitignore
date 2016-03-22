@@ -5,5 +5,6 @@
 *.pyd
 build/
 dist/
+doc/_build/
 *.egg
 winkerberos.egg-info/

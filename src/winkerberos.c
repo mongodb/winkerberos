@@ -55,35 +55,39 @@ PyDoc_STRVAR(sspi_client_init_doc,
 "Initializes a context for Kerberos SSPI client side authentication with\n"
 "the given service principal.\n"
 "\n"
-"The following flags are available (with SSPI mapping):\n"
-"GSS_C_DELEG_FLAG    (ISC_REQ_DELEG)\n"
-"GSS_C_MUTUAL_FLAG   (ISC_REQ_MUTUAL_AUTH)\n"
-"GSS_C_REPLAY_FLAG   (ISC_REQ_REPLAY_DETECT)\n"
-"GSS_C_SEQUENCE_FLAG (ISC_REQ_SEQUENCE_DETECT)\n"
-"GSS_C_CONF_FLAG     (ISC_REQ_CONFIDENTIALITY)\n"
-"GSS_C_INTEG_FLAG    (ISC_REQ_INTEGRITY)\n"
+"The following flags are available (with SSPI mapping)::\n"
 "\n"
-"The following flags are *not* available as they have no mapping in SSPI:\n"
-"GSS_C_ANON_FLAG\n"
-"GSS_C_PROT_READY_FLAG\n"
-"GSS_C_TRANS_FLAG\n"
+"  GSS_C_DELEG_FLAG    (ISC_REQ_DELEG)\n"
+"  GSS_C_MUTUAL_FLAG   (ISC_REQ_MUTUAL_AUTH)\n"
+"  GSS_C_REPLAY_FLAG   (ISC_REQ_REPLAY_DETECT)\n"
+"  GSS_C_SEQUENCE_FLAG (ISC_REQ_SEQUENCE_DETECT)\n"
+"  GSS_C_CONF_FLAG     (ISC_REQ_CONFIDENTIALITY)\n"
+"  GSS_C_INTEG_FLAG    (ISC_REQ_INTEGRITY)\n"
 "\n"
-"Parameters: service: A string containing the service principal in \n"
-"                     RFC-2078 format (service@hostname) or SPN\n"
-"                     format (service/hostname or service/hostname@REALM).\n"
-"            principal: An optional string containing the user principal\n"
-"                       name in the format 'user@realm'.\n"
-"            gssflags: An optional integer used to set GSS flags. Defaults\n"
-"                      to GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG.\n"
-"            user: An optional string that contains the name of the user\n"
-"                  whose credentials should be used for authentication.\n"
-"            domain: An optional string that contains the domain or\n"
-"                    workgroup name for `user`.\n"
-"            password: An optional string that contains the password for\n"
-"                      `user` in `domain`.\n"
+"The following flags are *not* available as they have no mapping in SSPI::\n"
 "\n"
-"Returns: A tuple of (result, context) where result is AUTH_GSS_COMPLETE\n"
-"         and context is an opaque value passed in subsequent function calls.");
+"  GSS_C_ANON_FLAG\n"
+"  GSS_C_PROT_READY_FLAG\n"
+"  GSS_C_TRANS_FLAG\n"
+"\n"
+":Parameters:\n"
+"  - `service`: A string containing the service principal in RFC-2078 format\n"
+"    (service@hostname) or SPN format (service/hostname or\n"
+"    service/hostname@REALM).\n"
+"  - `principal`: An optional string containing the user principal name in\n"
+"    the format 'user@realm'.\n"
+"  - `gssflags`: An optional integer used to set GSS flags. Defaults to\n"
+"    GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG.\n"
+"  - `user`: An optional string that contains the name of the user whose\n"
+"    credentials should be used for authentication.\n"
+"  - `domain`: An optional string that contains the domain or workgroup name\n"
+"    for `user`.\n"
+"  - `password`: An optional string that contains the password for `user` in\n"
+"    `domain`.\n"
+"\n"
+":Returns: A tuple of (result, context) where result is\n"
+"          :data:`AUTH_GSS_COMPLETE` and context is an opaque value passed\n"
+"          in subsequent function calls.");
 
 static PyObject*
 sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
@@ -144,9 +148,10 @@ PyDoc_STRVAR(sspi_client_clean_doc,
 "pykerberos but does nothing. The context object destroys itself when it\n"
 "is reclaimed.\n"
 "\n"
-"Parameters: context: The context object returned by authGSSClientInit.\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
 "\n"
-"Returns: AUTH_GSS_COMPLETE");
+":Returns: :data:`AUTH_GSS_COMPLETE`");
 
 static PyObject*
 sspi_client_clean(PyObject* self, PyObject* args) {
@@ -160,11 +165,12 @@ PyDoc_STRVAR(sspi_client_step_doc,
 "Executes a single Kerberos SSPI client step using the supplied server "
 "challenge.\n"
 "\n"
-"Parameters: context: The context object returned by authGSSClientInit.\n"
-"            challenge: A string containing the base64 encoded server\n"
-"            challenge. Ignored for the first step (pass the empty string).\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
+"  - `challenge`: A string containing the base64 encoded server challenge.\n"
+"    Ignored for the first step (pass the empty string).\n"
 "\n"
-"Returns: AUTH_GSS_CONTINUE or AUTH_GSS_COMPLETE");
+":Returns: :data:`AUTH_GSS_CONTINUE` or :data:`AUTH_GSS_COMPLETE`");
 
 static PyObject*
 sspi_client_step(PyObject* self, PyObject* args) {
@@ -200,9 +206,10 @@ PyDoc_STRVAR(sspi_client_response_doc,
 "\n"
 "Get the response to the last successful client operation.\n"
 "\n"
-"Parameters: context: The context object returned by authGSSClientInit.\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
 "\n"
-"Returns: A base64 encoded string to return to the server.");
+":Returns: A base64 encoded string to return to the server.");
 
 static PyObject*
 sspi_client_response(PyObject* self, PyObject* args) {
@@ -232,9 +239,10 @@ PyDoc_STRVAR(sspi_client_username_doc,
 "Get the user name of the authenticated principal. Will only succeed after\n"
 "authentication is complete.\n"
 "\n"
-"Parameters: context: The context object returned by authGSSClientInit.\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
 "\n"
-"Returns: A string containing the username.");
+":Returns: A string containing the username.");
 
 static PyObject*
 sspi_client_username(PyObject* self, PyObject* args) {
@@ -263,11 +271,12 @@ PyDoc_STRVAR(sspi_client_unwrap_doc,
 "\n"
 "Execute the client side DecryptMessage (GSSAPI Unwrap) operation.\n"
 "\n"
-"Parameters: context: The context object returned by authGSSClientInit.\n"
-"            challenge: A string containing the base64 encoded server\n"
-"            challenge.\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
+"  - `challenge`: A string containing the base64 encoded server\n"
+"    challenge.\n"
 "\n"
-"Returns: AUTH_GSS_COMPLETE");
+":Returns: :data:`AUTH_GSS_COMPLETE`");
 
 static PyObject*
 sspi_client_unwrap(PyObject* self, PyObject* args) {
@@ -303,12 +312,13 @@ PyDoc_STRVAR(sspi_client_wrap_doc,
 "\n"
 "Execute the client side EncryptMessage (GSSAPI Wrap) operation.\n"
 "\n"
-"Parameters: context: The context object returned by authGSSClientInit.\n"
-"            data: The result of calling authGSSClientResponse after\n"
-"            authGSSClientUnwrap.\n"
-"            user: The user to authenticate.\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
+"  - `data`: The result of calling :func:`authGSSClientResponse` after\n"
+"    :func:`authGSSClientUnwrap`.\n"
+"  - `user`: The user to authenticate.\n"
 "\n"
-"Returns: AUTH_GSS_COMPLETE");
+":Returns: :data:`AUTH_GSS_COMPLETE`");
 
 static PyObject*
 sspi_client_wrap(PyObject* self, PyObject* args) {

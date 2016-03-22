@@ -1,0 +1,23 @@
+:mod:`winkerberos`
+==================
+
+.. automodule:: winkerberos
+   :synopsis: A native Kerberos SSPI client implementation.
+
+   .. autofunction:: authGSSClientInit
+   .. autofunction:: authGSSClientStep
+   .. autofunction:: authGSSClientResponse
+   .. autofunction:: authGSSClientUsername
+   .. autofunction:: authGSSClientUnwrap
+   .. autofunction:: authGSSClientWrap
+   .. autofunction:: authGSSClientClean
+   .. data:: AUTH_GSS_COMPLETE
+   .. data:: AUTH_GSS_CONTINUE
+   .. data:: GSS_C_DELEG_FLAG
+   .. data:: GSS_C_MUTUAL_FLAG
+   .. data:: GSS_C_REPLAY_FLAG
+   .. data:: GSS_C_SEQUENCE_FLAG
+   .. data:: GSS_C_CONF_FLAG
+   .. data:: GSS_C_INTEG_FLAG
+   .. data:: __version__
+

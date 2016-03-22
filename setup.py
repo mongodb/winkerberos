@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import subprocess
 import sys
 
 try:
@@ -20,6 +22,32 @@ except ImportError:
     from ez_setup import use_setuptools
     use_setuptools()
     from setuptools import setup, Extension
+
+from distutils.command.build_ext import build_ext
+
+# Sphinx needs to import the built extension to generate
+# html docs, so build the extension inplace first.
+class doc(build_ext):
+
+    def run(self):
+        self.inplace = True
+        build_ext.run(self)
+
+        path = os.path.join("doc", "_build", "html")
+
+        status = subprocess.call(["sphinx-build",
+                                  "-E",
+                                  "-b",
+                                  "html",
+                                  "doc",
+                                  path])
+
+        if status:
+            raise RuntimeError("Documentation build failed")
+
+        sys.stdout.write("\nDocumentation build complete. The "
+                         "results can be found in %s.\n" % (path,))
+
 
 with open("README.rst") as f:
     try:
@@ -72,6 +100,7 @@ setup(
                 "src/base64.c"
             ],
         )
-    ]
+    ],
+    cmdclass={"doc": doc}
 )
 
