@@ -93,7 +93,7 @@ setup(
     ext_modules = [
         Extension(
             "winkerberos",
-            extra_link_args=['secur32.lib'],
+            extra_link_args=['secur32.lib', '/NXCOMPAT', '/DYNAMICBASE'],
             sources = [
                 "src/winkerberos.c",
                 "src/kerberos_sspi.c",
