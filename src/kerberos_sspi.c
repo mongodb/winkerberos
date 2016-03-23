@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "base64.h"
 #include "kerberos_sspi.h"
 
 #include <string.h>
@@ -65,6 +64,65 @@ set_krberror(DWORD errCode, const SEC_CHAR* msg) {
     } else {
         PyErr_Format(KrbError, "SSPI: %s", msg);
     }
+}
+
+static SEC_CHAR*
+base64_encode(const BYTE* value, DWORD vlen) {
+    SEC_CHAR* out = NULL;
+    DWORD len;
+    /* Get the correct size for the out buffer. */
+    if (CryptBinaryToStringA(value,
+                             vlen,
+                             CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF,
+                             NULL,
+                             &len)) {
+        out = (SEC_CHAR*)malloc(sizeof(SEC_CHAR) * len);
+        if (out) {
+            /* Encode to the out buffer. */
+            if (CryptBinaryToStringA(value,
+                                     vlen,
+                                     CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF,
+                                     out,
+                                     &len)) {
+                return out;
+            } else {
+                free(out);
+            }
+        }
+    }
+    PyErr_Format(KrbError, "CryptBinaryToString failed.");
+    return NULL;
+}
+
+static BYTE*
+base64_decode(const SEC_CHAR* value, DWORD* rlen) {
+    BYTE* out = NULL;
+    /* Get the correct size for the out buffer. */
+    if (CryptStringToBinaryA(value,
+                             0,
+                             CRYPT_STRING_BASE64,
+                             NULL,
+                             rlen,
+                             NULL,
+                             NULL)) {
+        out = (BYTE*)malloc(sizeof(BYTE) * *rlen);
+        if (out) {
+            /* Decode to the out buffer. */
+            if (CryptStringToBinaryA(value,
+                                     0,
+                                     CRYPT_STRING_BASE64,
+                                     out,
+                                     rlen,
+                                     NULL,
+                                     NULL)) {
+                return out;
+            } else {
+                free(out);
+            }
+        }
+    }
+    PyErr_Format(KrbError, "CryptStringToBinary failed.");
+    return NULL;
 }
 
 static VOID
@@ -157,7 +215,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
     SecBuffer outBufs[1];
     ULONG ignored;
     SECURITY_STATUS status = AUTH_GSS_CONTINUE;
-    SIZE_T len;
+    DWORD len;
 
     if (state->response != NULL) {
         free(state->response);
@@ -172,7 +230,10 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
     inBufs[0].BufferType = SECBUFFER_TOKEN;
     if (state->haveCtx) {
         inBufs[0].pvBuffer = base64_decode(challenge, &len);
-        inBufs[0].cbBuffer = (ULONG)len;
+        if (!inBufs[0].pvBuffer) {
+            return AUTH_GSS_ERROR;
+        }
+        inBufs[0].cbBuffer = len;
     }
 
     outbuf.ulVersion = SECBUFFER_VERSION;
@@ -217,6 +278,10 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
     if (outBufs[0].cbBuffer) {
         state->response = base64_encode(outBufs[0].pvBuffer,
                                         outBufs[0].cbBuffer);
+        if (!state->response) {
+            status = AUTH_GSS_ERROR;
+            goto done;
+        }
     }
     if (status == SEC_E_OK) {
         /* Get authenticated username. */
@@ -253,7 +318,7 @@ done:
 INT
 auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge) {
     SECURITY_STATUS status;
-    SIZE_T len;
+    DWORD len;
     SecBuffer wrapBufs[2];
     SecBufferDesc wrapBufDesc;
     wrapBufDesc.ulVersion = SECBUFFER_VERSION;
@@ -271,7 +336,10 @@ auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge) {
     }
 
     wrapBufs[0].pvBuffer = base64_decode(challenge, &len);
-    wrapBufs[0].cbBuffer = (ULONG)len;
+    if (!wrapBufs[0].pvBuffer) {
+        return AUTH_GSS_ERROR;
+    }
+    wrapBufs[0].cbBuffer = len;
     wrapBufs[0].BufferType = SECBUFFER_STREAM;
 
     wrapBufs[1].pvBuffer = NULL;
@@ -289,6 +357,9 @@ auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge) {
     if (wrapBufs[1].cbBuffer) {
         state->response = base64_encode(wrapBufs[1].pvBuffer,
                                         wrapBufs[1].cbBuffer);
+        if (!state->response) {
+            status = AUTH_GSS_ERROR;
+        }
     }
 done:
     if (wrapBufs[0].pvBuffer) {
@@ -308,9 +379,9 @@ auth_sspi_client_wrap(sspi_client_state* state,
     SEC_CHAR* decodedData = NULL;
     SEC_CHAR* inbuf;
     SEC_CHAR* outbuf;
-    SIZE_T outbufSize;
+    DWORD outbufSize;
     SEC_CHAR* plaintextMessage;
-    SIZE_T plaintextMessageSize;
+    DWORD plaintextMessageSize;
 
     if (state->response != NULL) {
         free(state->response);
@@ -330,9 +401,12 @@ auth_sspi_client_wrap(sspi_client_state* state,
 
     if (user) {
         /* Length of user + 4 bytes for security layer (see below). */
-        plaintextMessageSize = strlen(user) + 4;
+        plaintextMessageSize = (DWORD)strlen(user) + 4;
     } else {
         decodedData = base64_decode(data, &plaintextMessageSize);
+        if (!decodedData) {
+            return AUTH_GSS_ERROR;
+        }
     }
 
     inbuf = (SEC_CHAR*)malloc(
@@ -367,7 +441,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
     wrapBufs[0].BufferType = SECBUFFER_TOKEN;
     wrapBufs[0].pvBuffer = inbuf;
 
-    wrapBufs[1].cbBuffer = (ULONG)plaintextMessageSize;
+    wrapBufs[1].cbBuffer = plaintextMessageSize;
     wrapBufs[1].BufferType = SECBUFFER_DATA;
     wrapBufs[1].pvBuffer = inbuf + sizes.cbSecurityTrailer;
 
@@ -386,7 +460,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
 
     outbufSize =
         wrapBufs[0].cbBuffer + wrapBufs[1].cbBuffer + wrapBufs[2].cbBuffer;
-    outbuf = (SEC_CHAR*)malloc(outbufSize);
+    outbuf = (SEC_CHAR*)malloc(sizeof(SEC_CHAR) * outbufSize);
     if (outbuf == NULL) {
         free(inbuf);
         PyErr_SetNone(PyExc_MemoryError);
@@ -401,8 +475,13 @@ auth_sspi_client_wrap(sspi_client_state* state,
            wrapBufs[2].pvBuffer,
            wrapBufs[2].cbBuffer);
     state->response = base64_encode(outbuf, outbufSize);
+    if (!state->response) {
+        status = AUTH_GSS_ERROR;
+    } else {
+        status = AUTH_GSS_COMPLETE;
+    }
     free(inbuf);
     free(outbuf);
-    return AUTH_GSS_COMPLETE;
+    return status;
 }
 
