@@ -371,6 +371,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
     SecBufferDesc wrapBufDesc;
     SEC_CHAR* decodedData = NULL;
     SEC_CHAR* inbuf;
+    SIZE_T inbufSize;
     SEC_CHAR* outbuf;
     DWORD outbufSize;
     SEC_CHAR* plaintextMessage;
@@ -402,8 +403,9 @@ auth_sspi_client_wrap(sspi_client_state* state,
         }
     }
 
-    inbuf = (SEC_CHAR*)malloc(
-        sizes.cbSecurityTrailer + plaintextMessageSize + sizes.cbBlockSize);
+    inbufSize =
+        sizes.cbSecurityTrailer + plaintextMessageSize + sizes.cbBlockSize;
+    inbuf = (SEC_CHAR*)malloc(inbufSize);
     if (inbuf == NULL) {
         free(decodedData);
         PyErr_SetNone(PyExc_MemoryError);
@@ -419,10 +421,18 @@ auth_sspi_client_wrap(sspi_client_state* state,
         plaintextMessage[1] = 0;
         plaintextMessage[2] = 0;
         plaintextMessage[3] = 0;
-        memcpy(plaintextMessage + 4, user, strlen(user));
+        memcpy_s(
+            plaintextMessage + 4,
+            inbufSize - sizes.cbSecurityTrailer - 4,
+            user,
+            strlen(user));
     } else {
         /* No user provided. Just rewrap data. */
-        memcpy(plaintextMessage, decodedData, plaintextMessageSize);
+        memcpy_s(
+            plaintextMessage,
+            inbufSize - sizes.cbSecurityTrailer,
+            decodedData,
+            plaintextMessageSize);
         free(decodedData);
     }
 
@@ -459,14 +469,18 @@ auth_sspi_client_wrap(sspi_client_state* state,
         PyErr_SetNone(PyExc_MemoryError);
         return AUTH_GSS_ERROR;
     }
-    memcpy(outbuf, wrapBufs[0].pvBuffer,
-           wrapBufs[0].cbBuffer);
-    memcpy(outbuf + wrapBufs[0].cbBuffer,
-           wrapBufs[1].pvBuffer,
-           wrapBufs[1].cbBuffer);
-    memcpy(outbuf + wrapBufs[0].cbBuffer + wrapBufs[1].cbBuffer,
-           wrapBufs[2].pvBuffer,
-           wrapBufs[2].cbBuffer);
+    memcpy_s(outbuf,
+             outbufSize,
+             wrapBufs[0].pvBuffer,
+             wrapBufs[0].cbBuffer);
+    memcpy_s(outbuf + wrapBufs[0].cbBuffer,
+             outbufSize - wrapBufs[0].cbBuffer,
+             wrapBufs[1].pvBuffer,
+             wrapBufs[1].cbBuffer);
+    memcpy_s(outbuf + wrapBufs[0].cbBuffer + wrapBufs[1].cbBuffer,
+             outbufSize - wrapBufs[0].cbBuffer - wrapBufs[1].cbBuffer,
+             wrapBufs[2].pvBuffer,
+             wrapBufs[2].cbBuffer);
     state->response = base64_encode(outbuf, outbufSize);
     if (!state->response) {
         status = AUTH_GSS_ERROR;
