@@ -19,9 +19,16 @@
 #if PY_MAJOR_VERSION >= 3
 #define PyInt_FromLong PyLong_FromLong
 #define PyString_FromString PyUnicode_FromString
+#endif
+
+#if PY_VERSION_HEX >= 0x03020000
 #define PyCObject_Check PyCapsule_CheckExact
 #define PyCObject_FromVoidPtr(cobj, destr) PyCapsule_New(cobj, NULL, destr)
 #define PyCObject_AsVoidPtr(self) PyCapsule_GetPointer(self, NULL)
+#endif
+
+#if PY_VERSION_HEX < 0x03030000
+#define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
 #endif
 
 PyDoc_STRVAR(winkerberos_documentation,
@@ -32,6 +39,69 @@ PyDoc_STRVAR(winkerberos_documentation,
 
 /* Note - also defined extern in kerberos_sspi.c */
 PyObject* KrbError;
+
+static BOOL
+_py_unicode_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
+    Py_ssize_t res;
+    Py_ssize_t len = PyUnicode_GET_LENGTH(obj);
+    WCHAR* buf = (WCHAR*)malloc(sizeof(WCHAR) * (len + 1));
+    if (!buf) {
+        PyErr_SetNone(PyExc_MemoryError);
+        return FALSE;
+    }
+#if PY_VERSION_HEX < 0x03020000
+    res = PyUnicode_AsWideChar((PyUnicodeObject*)obj, buf, len);
+#else
+    res = PyUnicode_AsWideChar(obj, buf, len);
+#endif
+    if (res == -1) {
+        goto fail;
+    }
+    buf[len] = L'\0';
+    if (wcslen(buf) != (size_t)len) {
+        PyErr_SetString(PyExc_ValueError, "embedded null character");
+        goto fail;
+    }
+    *out = buf;
+    *outlen = (ULONG)len;
+    return TRUE;
+
+fail:
+    free(buf);
+    return FALSE;
+}
+
+static BOOL
+StringObject_AsWCHAR(PyObject* arg, INT argnum, WCHAR** out, ULONG* outlen) {
+    if (arg == Py_None) {
+        *out = NULL;
+        *outlen = 0;
+        return TRUE;
+#if PY_MAJOR_VERSION < 3
+    } else if (PyString_Check(arg)) {
+        BOOL result;
+        PyObject* localobj = PyUnicode_FromEncodedObject(arg, NULL, "strict");
+        if (!localobj) {
+            return FALSE;
+        }
+        result = _py_unicode_to_wchar(localobj, out, outlen);
+        Py_DECREF(localobj);
+        return result;
+#endif
+    } else if (PyUnicode_Check(arg)){
+        return _py_unicode_to_wchar(arg, out, outlen);
+    } else {
+        PyErr_Format(
+           PyExc_TypeError,
+#if PY_MAJOR_VERSION < 3
+           "argument %d must be string or None, not %s",
+#else
+           "argument %d must be str or None, not %s",
+#endif
+           argnum, arg->ob_type->tp_name);
+        return FALSE;
+    }
+}
 
 static VOID
 #if PY_MAJOR_VERSION >=3
@@ -94,25 +164,28 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     sspi_client_state* state;
     PyObject* pyctx = NULL;
     SEC_CHAR* service;
-    SEC_CHAR* principal = NULL;
+    PyObject* principalobj = Py_None;
     LONG flags = ISC_REQ_MUTUAL_AUTH | ISC_REQ_SEQUENCE_DETECT;
-    SEC_CHAR* user = NULL;
-    SEC_CHAR* domain = NULL;
-    SEC_CHAR* password = NULL;
+    PyObject* userobj = Py_None;
+    PyObject* domainobj = Py_None;
+    PyObject* passwordobj = Py_None;
+    WCHAR *principal = NULL, *user = NULL, *domain = NULL, *password = NULL;
+    ULONG len, ulen, dlen, plen;
+    PyObject* resultobj = NULL;
     INT result = 0;
     static SEC_CHAR* keywords[] = {
         "service", "principal", "gssflags", "user", "domain", "password", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args,
                                      kw,
-                                     "s|zlzzz",
+                                     "s|OlOOO",
                                      keywords,
                                      &service,
-                                     &principal,
+                                     &principalobj,
                                      &flags,
-                                     &user,
-                                     &domain,
-                                     &password)) {
+                                     &userobj,
+                                     &domainobj,
+                                     &passwordobj)) {
         return NULL;
     }
     if (flags < 0) {
@@ -120,25 +193,44 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         return NULL;
     }
 
+    if (!StringObject_AsWCHAR(principalobj, 2, &principal, &len) ||
+        !StringObject_AsWCHAR(userobj, 4, &user, &ulen) ||
+        !StringObject_AsWCHAR(domainobj, 5, &domain, &dlen) ||
+        !StringObject_AsWCHAR(passwordobj, 6, &password, &plen)) {
+        goto done;
+    }
+
     state = (sspi_client_state*)malloc(sizeof(sspi_client_state));
     if (state == NULL) {
-        return PyErr_NoMemory();
+        PyErr_SetNone(PyExc_MemoryError);
+        goto done;
     }
 
     pyctx = PyCObject_FromVoidPtr(state, &destroy_sspi_client);
     if (pyctx == NULL) {
         free(state);
-        return NULL;
+        goto done;
     }
 
     result = auth_sspi_client_init(
-        service, principal, (ULONG)flags, user, domain, password, state);
+        service, principal, (ULONG)flags,
+        user, ulen, domain, dlen, password, plen, state);
     if (result == AUTH_GSS_ERROR) {
         Py_DECREF(pyctx);
-        return NULL;
+        goto done;
     }
 
-    return Py_BuildValue("(iN)", result, pyctx);
+    resultobj =  Py_BuildValue("(iN)", result, pyctx);
+
+done:
+    free(principal);
+    free(user);
+    free(domain);
+    if (password) {
+        SecureZeroMemory(password, sizeof(WCHAR) * plen);
+        free(password);
+    }
+    return resultobj;
 }
 
 PyDoc_STRVAR(sspi_client_clean_doc,

@@ -19,6 +19,7 @@
 #include <Python.h>
 #include <Windows.h>
 #include <sspi.h>
+#include <string.h>
 
 #define AUTH_GSS_ERROR -1
 #define AUTH_GSS_COMPLETE 1
@@ -37,11 +38,14 @@ typedef struct {
 
 VOID destroy_sspi_client_state(sspi_client_state* state);
 INT auth_sspi_client_init(SEC_CHAR* service,
-                          SEC_CHAR* principal,
+                          WCHAR* principal,
                           ULONG flags,
-                          SEC_CHAR* user,
-                          SEC_CHAR* domain,
-                          SEC_CHAR* password,
+                          WCHAR* user,
+                          ULONG ulen,
+                          WCHAR* domain,
+                          ULONG dlen,
+                          WCHAR* password,
+                          ULONG plen,
                           sspi_client_state* state);
 INT auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge);
 INT auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge);

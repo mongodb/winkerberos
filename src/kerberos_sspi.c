@@ -16,8 +16,6 @@
 
 #include "kerberos_sspi.h"
 
-#include <string.h>
-
 extern PyObject* KrbError;
 
 VOID
@@ -135,14 +133,17 @@ set_uninitialized_context() {
 
 INT
 auth_sspi_client_init(SEC_CHAR* service,
-                      SEC_CHAR* principal,
+                      WCHAR* principal,
                       ULONG flags,
-                      SEC_CHAR* user,
-                      SEC_CHAR* domain,
-                      SEC_CHAR* password,
+                      WCHAR* user,
+                      ULONG ulen,
+                      WCHAR* domain,
+                      ULONG dlen,
+                      WCHAR* password,
+                      ULONG plen,
                       sspi_client_state* state) {
     SECURITY_STATUS status;
-    SEC_WINNT_AUTH_IDENTITY_A authIdentity;
+    SEC_WINNT_AUTH_IDENTITY_W authIdentity;
     TimeStamp ignored;
 
     state->response = NULL;
@@ -165,26 +166,18 @@ auth_sspi_client_init(SEC_CHAR* service,
 
     if (user) {
         authIdentity.User = user;
-        authIdentity.UserLength = (ULONG)strlen(user);
-        authIdentity.Domain = NULL;
-        authIdentity.DomainLength = 0;
-        authIdentity.Password = NULL;
-        authIdentity.PasswordLength = 0;
-        if (domain) {
-            authIdentity.Domain = domain;
-            authIdentity.DomainLength = (ULONG)strlen(domain);
-        }
-        if (password) {
-            authIdentity.Password = password;
-            authIdentity.PasswordLength = (ULONG)strlen(password);
-        }
-        authIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+        authIdentity.UserLength = ulen;
+        authIdentity.Domain = domain;
+        authIdentity.DomainLength = dlen;
+        authIdentity.Password = password;
+        authIdentity.PasswordLength = plen;
+        authIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
     }
 
-    status = AcquireCredentialsHandleA(/* Principal (NULL means current user) */
+    status = AcquireCredentialsHandleW(/* Principal (NULL means current user) */
                                        principal,
                                        /* Security package name */
-                                       "kerberos",
+                                       L"kerberos",
                                        /* Credentials Use */
                                        SECPKG_CRED_OUTBOUND,
                                        /* LogonID (We don't use this) */

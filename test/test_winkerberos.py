@@ -128,3 +128,84 @@ class TestWinKerberos(unittest.TestCase):
         self.assertRaises(
             kerberos.KrbError, kerberos.authGSSClientWrap, ctx, "foobar")
 
+    def test_arg_parsing(self):
+
+        self.assertRaises(TypeError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          bytearray())
+        self.assertRaises(TypeError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          u"foo",
+                          0,
+                          bytearray())
+        self.assertRaises(TypeError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          u"foo",
+                          0,
+                          u"foo",
+                          bytearray())
+        self.assertRaises(TypeError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          u"foo",
+                          0,
+                          u"foo",
+                          u"foo",
+                          bytearray())
+
+        self.assertRaises(ValueError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          u"fo\0")
+        self.assertRaises(ValueError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          u"foo",
+                          0,
+                          u"f0\0")
+        self.assertRaises(ValueError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          u"foo",
+                          0,
+                          u"foo",
+                          u"fo\0")
+        self.assertRaises(ValueError,
+                          kerberos.authGSSClientInit,
+                          u"foo",
+                          u"foo",
+                          0,
+                          u"foo",
+                          u"foo",
+                          u"fo\0")
+
+        if sys.version_info[0] >= 3:
+            self.assertRaises(TypeError,
+                              kerberos.authGSSClientInit,
+                              "foo",
+                              b"foo")
+            self.assertRaises(TypeError,
+                              kerberos.authGSSClientInit,
+                              "foo",
+                              "foo",
+                              0,
+                              b"foo")
+            self.assertRaises(TypeError,
+                              kerberos.authGSSClientInit,
+                              "foo",
+                              "foo",
+                              0,
+                              "foo",
+                              b"foo")
+            self.assertRaises(TypeError,
+                              kerberos.authGSSClientInit,
+                              "foo",
+                              "foo",
+                              0,
+                              "foo",
+                              "foo",
+                              b"foo")
+
