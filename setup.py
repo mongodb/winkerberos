@@ -64,7 +64,7 @@ else:
 
 setup(
     name="winkerberos",
-    version="0.1.0.dev0",
+    version="0.1.0",
     description="High level interface to SSPI for Kerberos client auth",
     long_description=readme,
     author="Bernie Hackett",
@@ -77,7 +77,7 @@ setup(
     platforms="Windows",
     license="Apache License, Version 2.0",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: Microsoft :: Windows",
