@@ -37,7 +37,7 @@ Examples
 
 This is a simplified example of a complete authentication session:
 
-.. code-block:: pycon
+.. code-block:: python
 
     import winkerberos as kerberos
 
@@ -49,7 +49,7 @@ This is a simplified example of a complete authentication session:
         # Initialize the context object.
         status, ctx = kerberos.authGSSClientInit(service)
 
-        # GSSAPI is a "client first" algorithm. Send the first
+        # GSSAPI is a "client first" mechanism. Send the first
         # "response" to the server and recieve its first
         # challenge.
         status = kerberos.authGSSClientStep(ctx, "")
@@ -78,7 +78,7 @@ Documentation
 
 Use the help function in the python interactive shell:
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import winkerberos
     >>> help(winkerberos)
