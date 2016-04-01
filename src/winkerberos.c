@@ -41,6 +41,50 @@ PyDoc_STRVAR(winkerberos_documentation,
 PyObject* KrbError;
 
 static BOOL
+_py_buffer_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
+    Py_buffer view;
+    WCHAR* outbuf;
+    INT result_len;
+    BOOL result = FALSE;
+    if (PyObject_GetBuffer(obj, &view, PyBUF_SIMPLE) == -1) {
+        return FALSE;
+    }
+    if (!PyBuffer_IsContiguous(&view, 'C')) {
+        PyErr_SetString(PyExc_ValueError,
+                        "must be a contiguous buffer");
+        goto done;
+    }
+    if (!view.buf || view.len < 0) {
+        PyErr_SetString(PyExc_ValueError, "invalid buffer");
+        goto done;
+    }
+    if (view.itemsize != 1) {
+        PyErr_SetString(PyExc_ValueError,
+                        "buffer data must be ascii or utf8");
+        goto done;
+    }
+    outbuf = (WCHAR*)malloc(sizeof(WCHAR) * (view.len + 1));
+    if (!outbuf) {
+        PyErr_SetNone(PyExc_MemoryError);
+        goto done;
+    }
+    result_len = MultiByteToWideChar(
+        CP_UTF8, 0, (CHAR*)view.buf, (INT)view.len, outbuf, (INT)view.len);
+    if (!result_len) {
+        set_krberror(GetLastError(), "MultiByteToWideChar failed");
+        free(outbuf);
+        goto done;
+    }
+    outbuf[result_len] = L'\0';
+    *outlen = (ULONG)result_len;
+    *out = outbuf;
+    result = TRUE;
+done:
+    PyBuffer_Release(&view);
+    return result;
+}
+
+static BOOL
 _py_unicode_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
     Py_ssize_t res;
     Py_ssize_t len = PyUnicode_GET_LENGTH(obj);
@@ -69,6 +113,19 @@ _py_unicode_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
 fail:
     free(buf);
     return FALSE;
+}
+
+static BOOL
+Password_AsWCHAR(PyObject* arg, WCHAR** out, ULONG* outlen) {
+    if (arg == Py_None) {
+        *out = NULL;
+        *outlen = 0;
+        return TRUE;
+    } else if (PyUnicode_Check(arg)){
+        return _py_unicode_to_wchar(arg, out, outlen);
+    } else {
+        return _py_buffer_to_wchar(arg, out, outlen);
+    }
 }
 
 static BOOL
@@ -196,7 +253,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     if (!StringObject_AsWCHAR(principalobj, 2, &principal, &len) ||
         !StringObject_AsWCHAR(userobj, 4, &user, &ulen) ||
         !StringObject_AsWCHAR(domainobj, 5, &domain, &dlen) ||
-        !StringObject_AsWCHAR(passwordobj, 6, &password, &plen)) {
+        !Password_AsWCHAR(passwordobj, &password, &plen)) {
         goto done;
     }
 

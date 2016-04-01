@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import array
+import mmap
 import os
 import sys
 
@@ -31,7 +33,9 @@ try:
 except ImportError:
     _HAVE_PYMONGO = False
 
+_PY3 = sys.version_info[0] >= 3
 
+# NOTE: Testing with non-ascii values will only work with python 3.x.
 _HOST = os.environ.get('MONGODB_HOST', 'localhost')
 _PORT = int(os.environ.get('MONGODB_PORT', 27017))
 _SPN = os.environ.get('KERBEROS_SERVICE')
@@ -56,6 +60,37 @@ class TestWinKerberos(unittest.TestCase):
             cls.client.admin.command('ismaster')
         except ConnectionFailure:
             raise unittest.SkipTest("Could not connection to MongoDB")
+
+    def authenticate(self,
+                     service=_SPN,
+                     principal=_PRINCIPAL,
+                     flags=kerberos.GSS_C_MUTUAL_FLAG,
+                     user=_USER,
+                     domain=_DOMAIN,
+                     password=_PASSWORD,
+                     upn=_UPN):
+            res, ctx = kerberos.authGSSClientInit(
+                service, principal, flags, user, domain, password)
+            res = kerberos.authGSSClientStep(ctx, "")
+            payload = kerberos.authGSSClientResponse(ctx)
+            response = self.db.command(
+                'saslStart', mechanism='GSSAPI', payload=payload)
+            while res == kerberos.AUTH_GSS_CONTINUE:
+                res = kerberos.authGSSClientStep(ctx, response['payload'])
+                payload = kerberos.authGSSClientResponse(ctx) or ''
+                response = self.db.command(
+                   'saslContinue',
+                   conversationId=response['conversationId'],
+                   payload=payload)
+            kerberos.authGSSClientUnwrap(ctx, response['payload'])
+            kerberos.authGSSClientWrap(ctx,
+                                       kerberos.authGSSClientResponse(ctx),
+                                       upn)
+            response = self.db.command(
+               'saslContinue',
+               conversationId=response['conversationId'],
+               payload=kerberos.authGSSClientResponse(ctx))
+            self.assertTrue(response['done'])
 
     def test_authenticate(self):
         res, ctx = kerberos.authGSSClientInit(
@@ -154,7 +189,7 @@ class TestWinKerberos(unittest.TestCase):
                           0,
                           u"foo",
                           u"foo",
-                          bytearray())
+                          {})
 
         self.assertRaises(ValueError,
                           kerberos.authGSSClientInit,
@@ -182,7 +217,7 @@ class TestWinKerberos(unittest.TestCase):
                           u"foo",
                           u"fo\0")
 
-        if sys.version_info[0] >= 3:
+        if _PY3:
             self.assertRaises(TypeError,
                               kerberos.authGSSClientInit,
                               "foo",
@@ -200,12 +235,37 @@ class TestWinKerberos(unittest.TestCase):
                               0,
                               "foo",
                               b"foo")
-            self.assertRaises(TypeError,
-                              kerberos.authGSSClientInit,
-                              "foo",
-                              "foo",
-                              0,
-                              "foo",
-                              "foo",
-                              b"foo")
+
+    def test_password_buffer(self):
+        password = bytearray(_PASSWORD, "utf8")
+        try:
+            self.authenticate(password=password)
+        except kerberos.KrbError as exc:
+            self.fail("Failed bytearray: %s" % (str(exc),))
+
+        # memoryview doesn't exist in python 2.6
+        if sys.version_info[:2] >= (2, 7):
+            try:
+                self.authenticate(password=memoryview(password))
+            except kerberos.KrbError as exc:
+                self.fail("Failed memoryview: %s" % (str(exc),))
+
+        # mmap.mmap and array.array only expose the
+        # buffer interface in python 3.x
+        if _PY3:
+            mm = mmap.mmap(-1, len(password))
+            mm.write(_PASSWORD.encode("utf8"))
+            mm.seek(0)
+            try:
+                self.authenticate(password=mm)
+            except kerberos.KrbError as exc:
+                self.fail("Failed map.map: %s" % (str(exc),))
+
+            # Note that only ascii and utf8 strings are supported, so
+            # 'u' with a unicode object won't work. Unicode objects
+            # must be encoded utf8 first.
+            try:
+                self.authenticate(password=array.array('b', password))
+            except kerberos.KrbError as exc:
+                self.fail("Failed array.array: %s" % (str(exc),))
 

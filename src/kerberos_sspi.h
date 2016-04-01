@@ -36,6 +36,7 @@ typedef struct {
     UCHAR haveCtx;
 } sspi_client_state;
 
+VOID set_krberror(DWORD errCode, const SEC_CHAR* msg);
 VOID destroy_sspi_client_state(sspi_client_state* state);
 INT auth_sspi_client_init(SEC_CHAR* service,
                           WCHAR* principal,

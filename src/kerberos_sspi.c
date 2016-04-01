@@ -42,7 +42,7 @@ destroy_sspi_client_state(sspi_client_state* state) {
     }
 }
 
-static VOID
+VOID
 set_krberror(DWORD errCode, const SEC_CHAR* msg) {
     SEC_CHAR* err;
     DWORD status;
@@ -120,6 +120,41 @@ base64_decode(const SEC_CHAR* value, DWORD* rlen) {
         }
     }
     PyErr_Format(KrbError, "CryptStringToBinary failed.");
+    return NULL;
+}
+
+static CHAR*
+wide_to_utf8(WCHAR* value) {
+    CHAR* out;
+    INT len = WideCharToMultiByte(CP_UTF8,
+                                  0,
+                                  value,
+                                  -1,
+                                  NULL,
+                                  0,
+                                  NULL,
+                                  NULL);
+    if (len) {
+        out = (CHAR*)malloc(sizeof(CHAR) * len);
+        if (!out) {
+            PyErr_SetNone(PyExc_MemoryError);
+            return NULL;
+        } else {
+            if (WideCharToMultiByte(CP_UTF8,
+                                    0,
+                                    value,
+                                    -1,
+                                    out,
+                                    len,
+                                    NULL,
+                                    NULL)) {
+                return out;
+            } else {
+                free(out);
+            }
+        }
+    }
+    set_krberror(GetLastError(), "WideCharToMultiByte");
     return NULL;
 }
 
@@ -278,17 +313,16 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
     }
     if (status == SEC_E_OK) {
         /* Get authenticated username. */
-        SecPkgContext_Names names;
-        status = QueryContextAttributes(
+        SecPkgContext_NamesW names;
+        status = QueryContextAttributesW(
             &state->ctx, SECPKG_ATTR_NAMES, &names);
         if (status != SEC_E_OK) {
-            set_krberror(status, "QueryContextAttributes");
+            set_krberror(status, "QueryContextAttributesW");
             status = AUTH_GSS_ERROR;
             goto done;
         }
-        state->username = _strdup(names.sUserName);
+        state->username = wide_to_utf8(names.sUserName);
         if (state->username == NULL) {
-            PyErr_SetNone(PyExc_MemoryError);
             FreeContextBuffer(names.sUserName);
             status = AUTH_GSS_ERROR;
             goto done;
