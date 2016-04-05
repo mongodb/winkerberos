@@ -75,11 +75,6 @@ This is a simplified example of a complete authentication session:
         # Complete authentication.
         send_response_and_receive_challenge(response)
 
-.. toctree::
-   :hidden:
-
-   winkerberos
-
 Issues
 ------
 All issues should be reported (and can be tracked / voted for /
@@ -92,6 +87,9 @@ To contribute, fork the project on
 `github <https://github.com/mongodb-labs/winkerberos>`_ and send a
 pull request.
 
+Changes
+-------
+See the :doc:`changelog` for a full list of changes to Winkerberos.
 
 About This Documentation
 ------------------------
@@ -103,11 +101,16 @@ following command from the root directory of the **WinKerberos** source::
 
   python setup.py doc
 
-
 Indices and tables
 ------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. toctree::
+   :hidden:
+
+   changelog
+   winkerberos
 
