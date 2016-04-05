@@ -39,7 +39,7 @@ Examples
 
 This is a simplified example of a complete authentication session:
 
-.. code-block:: pycon
+.. code-block:: python
 
     import winkerberos as kerberos
 
@@ -89,7 +89,7 @@ pull request.
 
 Changes
 -------
-See the :doc:`changelog` for a full list of changes to Winkerberos.
+See the :doc:`changelog` for a full list of changes to WinKerberos.
 
 About This Documentation
 ------------------------
