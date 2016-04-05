@@ -228,7 +228,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     PyObject* domainobj = Py_None;
     PyObject* passwordobj = Py_None;
     WCHAR *principal = NULL, *user = NULL, *domain = NULL, *password = NULL;
-    ULONG len, ulen, dlen, plen;
+    ULONG len, ulen, dlen, plen = 0;
     PyObject* resultobj = NULL;
     INT result = 0;
     static SEC_CHAR* keywords[] = {

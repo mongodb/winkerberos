@@ -65,11 +65,11 @@ set_krberror(DWORD errCode, const SEC_CHAR* msg) {
 }
 
 static SEC_CHAR*
-base64_encode(const BYTE* value, DWORD vlen) {
+base64_encode(const SEC_CHAR* value, DWORD vlen) {
     SEC_CHAR* out = NULL;
     DWORD len;
     /* Get the correct size for the out buffer. */
-    if (CryptBinaryToStringA(value,
+    if (CryptBinaryToStringA((BYTE*)value,
                              vlen,
                              CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF,
                              NULL,
@@ -77,7 +77,7 @@ base64_encode(const BYTE* value, DWORD vlen) {
         out = (SEC_CHAR*)malloc(sizeof(SEC_CHAR) * len);
         if (out) {
             /* Encode to the out buffer. */
-            if (CryptBinaryToStringA(value,
+            if (CryptBinaryToStringA((BYTE*)value,
                                      vlen,
                                      CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF,
                                      out,
@@ -92,9 +92,9 @@ base64_encode(const BYTE* value, DWORD vlen) {
     return NULL;
 }
 
-static BYTE*
+static SEC_CHAR*
 base64_decode(const SEC_CHAR* value, DWORD* rlen) {
-    BYTE* out = NULL;
+    SEC_CHAR* out = NULL;
     /* Get the correct size for the out buffer. */
     if (CryptStringToBinaryA(value,
                              0,
@@ -103,13 +103,13 @@ base64_decode(const SEC_CHAR* value, DWORD* rlen) {
                              rlen,
                              NULL,
                              NULL)) {
-        out = (BYTE*)malloc(sizeof(BYTE) * *rlen);
+        out = (SEC_CHAR*)malloc(sizeof(SEC_CHAR) * *rlen);
         if (out) {
             /* Decode to the out buffer. */
             if (CryptStringToBinaryA(value,
                                      0,
                                      CRYPT_STRING_BASE64,
-                                     out,
+                                     (BYTE*)out,
                                      rlen,
                                      NULL,
                                      NULL)) {
@@ -159,7 +159,7 @@ wide_to_utf8(WCHAR* value) {
 }
 
 static VOID
-set_uninitialized_context() {
+set_uninitialized_context(VOID) {
     PyErr_SetString(KrbError,
                     "Uninitialized security context. You must use "
                     "authGSSClientStep to initialize the security "
@@ -409,7 +409,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
     SEC_CHAR* outbuf;
     DWORD outbufSize;
     SEC_CHAR* plaintextMessage;
-    DWORD plaintextMessageSize;
+    SIZE_T plaintextMessageSize;
 
     if (state->response != NULL) {
         free(state->response);
@@ -429,9 +429,9 @@ auth_sspi_client_wrap(sspi_client_state* state,
 
     if (user) {
         /* Length of user + 4 bytes for security layer (see below). */
-        plaintextMessageSize = (DWORD)strlen(user) + 4;
+        plaintextMessageSize = strlen(user) + 4;
     } else {
-        decodedData = base64_decode(data, &plaintextMessageSize);
+        decodedData = base64_decode(data, (DWORD*)&plaintextMessageSize);
         if (!decodedData) {
             return AUTH_GSS_ERROR;
         }
@@ -478,7 +478,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
     wrapBufs[0].BufferType = SECBUFFER_TOKEN;
     wrapBufs[0].pvBuffer = inbuf;
 
-    wrapBufs[1].cbBuffer = plaintextMessageSize;
+    wrapBufs[1].cbBuffer = (ULONG)plaintextMessageSize;
     wrapBufs[1].BufferType = SECBUFFER_DATA;
     wrapBufs[1].pvBuffer = inbuf + sizes.cbSecurityTrailer;
 
