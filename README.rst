@@ -12,6 +12,15 @@ A native Kerberos SSPI client implementation. This module mimics the API of
 SSPI authentication on Microsoft Windows. It supports Python 2.6, 2.7, and
 3.3+.
 
+Installation
+============
+
+WinKerberos is in the `Python Package Index (pypi)
+<https://pypi.python.org/pypi/winkerberos>`_. Use `pip
+<https://pypi.python.org/pypi/pip>`_ to install it::
+
+  python -m pip install winkerberos
+
 Building and installing from source
 ===================================
 

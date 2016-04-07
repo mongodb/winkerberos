@@ -14,6 +14,15 @@ Documentation
 :doc:`winkerberos`
   Full API documentation for the winkerberos module.
 
+Installation
+------------
+
+WinKerberos is in the `Python Package Index (pypi)
+<https://pypi.python.org/pypi/winkerberos>`_. Use `pip
+<https://pypi.python.org/pypi/pip>`_ to install it::
+
+  python -m pip install winkerberos
+
 Building and installing from source
 -----------------------------------
 
