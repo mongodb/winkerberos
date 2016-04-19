@@ -167,6 +167,9 @@ class TestWinKerberos(unittest.TestCase):
 
         self.assertRaises(TypeError,
                           kerberos.authGSSClientInit,
+                          None)
+        self.assertRaises(TypeError,
+                          kerberos.authGSSClientInit,
                           u"foo",
                           bytearray())
         self.assertRaises(TypeError,

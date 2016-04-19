@@ -129,8 +129,12 @@ Password_AsWCHAR(PyObject* arg, WCHAR** out, ULONG* outlen) {
 }
 
 static BOOL
-StringObject_AsWCHAR(PyObject* arg, INT argnum, WCHAR** out, ULONG* outlen) {
-    if (arg == Py_None) {
+StringObject_AsWCHAR(PyObject* arg,
+                     INT argnum,
+                     BOOL allow_none,
+                     WCHAR** out,
+                     ULONG* outlen) {
+    if (arg == Py_None && allow_none) {
         *out = NULL;
         *outlen = 0;
         return TRUE;
@@ -151,11 +155,13 @@ StringObject_AsWCHAR(PyObject* arg, INT argnum, WCHAR** out, ULONG* outlen) {
         PyErr_Format(
            PyExc_TypeError,
 #if PY_MAJOR_VERSION < 3
-           "argument %d must be string or None, not %s",
+           "argument %d must be string%s, not %s",
 #else
-           "argument %d must be str or None, not %s",
+           "argument %d must be str%s, not %s",
 #endif
-           argnum, arg->ob_type->tp_name);
+           argnum,
+           allow_none ? " or None" : "",
+           (arg == Py_None) ? "None" : arg->ob_type->tp_name);
         return FALSE;
     }
 }
@@ -221,14 +227,15 @@ static PyObject*
 sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     sspi_client_state* state;
     PyObject* pyctx = NULL;
-    SEC_CHAR* service;
+    PyObject* serviceobj;
     PyObject* principalobj = Py_None;
     LONG flags = ISC_REQ_MUTUAL_AUTH | ISC_REQ_SEQUENCE_DETECT;
     PyObject* userobj = Py_None;
     PyObject* domainobj = Py_None;
     PyObject* passwordobj = Py_None;
-    WCHAR *principal = NULL, *user = NULL, *domain = NULL, *password = NULL;
-    ULONG len, ulen, dlen, plen = 0;
+    WCHAR *service = NULL, *principal = NULL;
+    WCHAR *user = NULL, *domain = NULL, *password = NULL;
+    ULONG slen, len, ulen, dlen, plen = 0;
     PyObject* resultobj = NULL;
     INT result = 0;
     static SEC_CHAR* keywords[] = {
@@ -236,9 +243,9 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
 
     if (!PyArg_ParseTupleAndKeywords(args,
                                      kw,
-                                     "s|OlOOO",
+                                     "O|OlOOO",
                                      keywords,
-                                     &service,
+                                     &serviceobj,
                                      &principalobj,
                                      &flags,
                                      &userobj,
@@ -251,9 +258,10 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         return NULL;
     }
 
-    if (!StringObject_AsWCHAR(principalobj, 2, &principal, &len) ||
-        !StringObject_AsWCHAR(userobj, 4, &user, &ulen) ||
-        !StringObject_AsWCHAR(domainobj, 5, &domain, &dlen) ||
+    if (!StringObject_AsWCHAR(serviceobj, 1, FALSE, &service, &slen) ||
+        !StringObject_AsWCHAR(principalobj, 2, TRUE, &principal, &len) ||
+        !StringObject_AsWCHAR(userobj, 4, TRUE, &user, &ulen) ||
+        !StringObject_AsWCHAR(domainobj, 5, TRUE, &domain, &dlen) ||
         !Password_AsWCHAR(passwordobj, &password, &plen)) {
         goto done;
     }
@@ -281,6 +289,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     resultobj =  Py_BuildValue("(iN)", result, pyctx);
 
 done:
+    free(service);
     free(principal);
     free(user);
     free(domain);

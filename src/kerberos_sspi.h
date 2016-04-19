@@ -28,7 +28,7 @@
 typedef struct {
     CredHandle cred;
     CtxtHandle ctx;
-    SEC_CHAR* spn;
+    WCHAR* spn;
     SEC_CHAR* response;
     SEC_CHAR* username;
     ULONG flags;
@@ -38,7 +38,7 @@ typedef struct {
 
 VOID set_krberror(DWORD errCode, const SEC_CHAR* msg);
 VOID destroy_sspi_client_state(sspi_client_state* state);
-INT auth_sspi_client_init(SEC_CHAR* service,
+INT auth_sspi_client_init(WCHAR* service,
                           WCHAR* principal,
                           ULONG flags,
                           WCHAR* user,

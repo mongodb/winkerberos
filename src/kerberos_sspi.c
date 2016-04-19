@@ -167,7 +167,7 @@ set_uninitialized_context(VOID) {
 }
 
 INT
-auth_sspi_client_init(SEC_CHAR* service,
+auth_sspi_client_init(WCHAR* service,
                       WCHAR* principal,
                       ULONG flags,
                       WCHAR* user,
@@ -186,16 +186,16 @@ auth_sspi_client_init(SEC_CHAR* service,
     state->flags = flags;
     state->haveCred = 0;
     state->haveCtx = 0;
-    state->spn = _strdup(service);
+    state->spn = _wcsdup(service);
     if (state->spn == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return AUTH_GSS_ERROR;
     }
     /* Convert RFC-2078 format to SPN */
-    if (!strchr(state->spn, '/')) {
-        SEC_CHAR* ptr = strchr(state->spn, '@');
+    if (!wcschr(state->spn, L'/')) {
+        WCHAR* ptr = wcschr(state->spn, L'@');
         if (ptr) {
-            *ptr = '/';
+            *ptr = L'/';
         }
     }
 
@@ -272,7 +272,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
     outBufs[0].BufferType = SECBUFFER_TOKEN;
 
     Py_BEGIN_ALLOW_THREADS
-    status = InitializeSecurityContextA(/* CredHandle */
+    status = InitializeSecurityContextW(/* CredHandle */
                                         &state->cred,
                                         /* CtxtHandle (NULL on first call) */
                                         state->haveCtx ? &state->ctx : NULL,
