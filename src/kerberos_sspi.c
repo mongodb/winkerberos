@@ -398,7 +398,8 @@ done:
 INT
 auth_sspi_client_wrap(sspi_client_state* state,
                       SEC_CHAR* data,
-                      SEC_CHAR* user) {
+                      SEC_CHAR* user,
+                      ULONG ulen) {
     SECURITY_STATUS status;
     SecPkgContext_Sizes sizes;
     SecBuffer wrapBufs[3];
@@ -409,7 +410,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
     SEC_CHAR* outbuf;
     DWORD outbufSize;
     SEC_CHAR* plaintextMessage;
-    SIZE_T plaintextMessageSize;
+    ULONG plaintextMessageSize;
 
     if (state->response != NULL) {
         free(state->response);
@@ -429,9 +430,9 @@ auth_sspi_client_wrap(sspi_client_state* state,
 
     if (user) {
         /* Length of user + 4 bytes for security layer (see below). */
-        plaintextMessageSize = strlen(user) + 4;
+        plaintextMessageSize = ulen + 4;
     } else {
-        decodedData = base64_decode(data, (DWORD*)&plaintextMessageSize);
+        decodedData = base64_decode(data, &plaintextMessageSize);
         if (!decodedData) {
             return AUTH_GSS_ERROR;
         }

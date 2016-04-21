@@ -18,6 +18,7 @@
 
 #include <Python.h>
 #include <Windows.h>
+#include <limits.h>
 #include <sspi.h>
 #include <string.h>
 
@@ -52,4 +53,5 @@ INT auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge);
 INT auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge);
 INT auth_sspi_client_wrap(sspi_client_state* state,
                           SEC_CHAR* data,
-                          SEC_CHAR* user);
+                          SEC_CHAR* user,
+                          ULONG ulen);

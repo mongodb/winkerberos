@@ -41,7 +41,16 @@ PyDoc_STRVAR(winkerberos_documentation,
 PyObject* KrbError;
 
 static BOOL
-_py_buffer_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
+_string_too_long(const SEC_CHAR* key, SIZE_T len) {
+    if (len > ULONG_MAX) {
+        PyErr_Format(PyExc_ValueError, "%s too large", key);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL
+_py_buffer_to_wchar(PyObject* obj, WCHAR** out, Py_ssize_t* outlen) {
     Py_buffer view;
     WCHAR* outbuf;
     INT result_len;
@@ -63,6 +72,11 @@ _py_buffer_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
                         "buffer data must be ascii or utf8");
         goto done;
     }
+    if (view.len > INT_MAX) {
+        /* MultiByteToWideChar expects length as a signed int. */
+        PyErr_SetString(PyExc_ValueError, "buffer too large");
+        goto done;
+    }
     outbuf = (WCHAR*)malloc(sizeof(WCHAR) * (view.len + 1));
     if (!outbuf) {
         PyErr_SetNone(PyExc_MemoryError);
@@ -76,7 +90,7 @@ _py_buffer_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
         goto done;
     }
     outbuf[result_len] = L'\0';
-    *outlen = (ULONG)result_len;
+    *outlen = (Py_ssize_t)result_len;
     *out = outbuf;
     result = TRUE;
 done:
@@ -85,7 +99,7 @@ done:
 }
 
 static BOOL
-_py_unicode_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
+_py_unicode_to_wchar(PyObject* obj, WCHAR** out, Py_ssize_t* outlen) {
     Py_ssize_t res;
     Py_ssize_t len = PyUnicode_GET_LENGTH(obj);
     WCHAR* buf = (WCHAR*)malloc(sizeof(WCHAR) * (len + 1));
@@ -107,7 +121,7 @@ _py_unicode_to_wchar(PyObject* obj, WCHAR** out, ULONG* outlen) {
         goto fail;
     }
     *out = buf;
-    *outlen = (ULONG)len;
+    *outlen = len;
     return TRUE;
 
 fail:
@@ -116,7 +130,7 @@ fail:
 }
 
 static BOOL
-Password_AsWCHAR(PyObject* arg, WCHAR** out, ULONG* outlen) {
+BufferObject_AsWCHAR(PyObject* arg, WCHAR** out, Py_ssize_t* outlen) {
     if (arg == Py_None) {
         *out = NULL;
         *outlen = 0;
@@ -133,7 +147,7 @@ StringObject_AsWCHAR(PyObject* arg,
                      INT argnum,
                      BOOL allow_none,
                      WCHAR** out,
-                     ULONG* outlen) {
+                     Py_ssize_t* outlen) {
     if (arg == Py_None && allow_none) {
         *out = NULL;
         *outlen = 0;
@@ -235,7 +249,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     PyObject* passwordobj = Py_None;
     WCHAR *service = NULL, *principal = NULL;
     WCHAR *user = NULL, *domain = NULL, *password = NULL;
-    ULONG slen, len, ulen, dlen, plen = 0;
+    Py_ssize_t slen, len, ulen, dlen, plen = 0;
     PyObject* resultobj = NULL;
     INT result = 0;
     static SEC_CHAR* keywords[] = {
@@ -262,7 +276,10 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         !StringObject_AsWCHAR(principalobj, 2, TRUE, &principal, &len) ||
         !StringObject_AsWCHAR(userobj, 4, TRUE, &user, &ulen) ||
         !StringObject_AsWCHAR(domainobj, 5, TRUE, &domain, &dlen) ||
-        !Password_AsWCHAR(passwordobj, &password, &plen)) {
+        !BufferObject_AsWCHAR(passwordobj, &password, &plen) ||
+        _string_too_long("user", (SIZE_T)ulen) ||
+        _string_too_long("domain", (SIZE_T)dlen) ||
+        _string_too_long("password", (SIZE_T)plen)) {
         goto done;
     }
 
@@ -280,7 +297,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
 
     result = auth_sspi_client_init(
         service, principal, (ULONG)flags,
-        user, ulen, domain, dlen, password, plen, state);
+        user, (ULONG)ulen, domain, (ULONG)dlen, password, (ULONG)plen, state);
     if (result == AUTH_GSS_ERROR) {
         Py_DECREF(pyctx);
         goto done;
@@ -339,6 +356,10 @@ sspi_client_step(PyObject* self, PyObject* args) {
     INT result = 0;
 
     if (!PyArg_ParseTuple(args, "Os", &pyctx, &challenge)) {
+        return NULL;
+    }
+
+    if (_string_too_long("challenge", strlen(challenge))) {
         return NULL;
     }
 
@@ -448,6 +469,10 @@ sspi_client_unwrap(PyObject* self, PyObject* args) {
         return NULL;
     }
 
+    if (_string_too_long("challenge", strlen(challenge))) {
+        return NULL;
+    }
+
     if (!PyCObject_Check(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
@@ -485,9 +510,19 @@ sspi_client_wrap(PyObject* self, PyObject* args) {
     PyObject* pyctx;
     SEC_CHAR* data;
     SEC_CHAR* user = NULL;
+    SIZE_T ulen = 0;
     INT result;
 
     if (!PyArg_ParseTuple(args, "Os|z", &pyctx, &data, &user)) {
+        return NULL;
+    }
+    if (user) {
+        ulen = strlen(user);
+    }
+
+    if (_string_too_long("data", strlen(data)) ||
+        /* Length of user + 4 bytes for security options. */
+        _string_too_long("user", ulen + 4)) {
         return NULL;
     }
 
@@ -501,7 +536,7 @@ sspi_client_wrap(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    result = auth_sspi_client_wrap(state, data, user);
+    result = auth_sspi_client_wrap(state, data, user, (ULONG)ulen);
     if (result == AUTH_GSS_ERROR) {
         return NULL;
     }
