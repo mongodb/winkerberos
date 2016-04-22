@@ -498,9 +498,11 @@ PyDoc_STRVAR(sspi_client_wrap_doc,
 "\n"
 ":Parameters:\n"
 "  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
-"  - `data`: The result of calling :func:`authGSSClientResponse` after\n"
-"    :func:`authGSSClientUnwrap`.\n"
-"  - `user`: The user to authenticate.\n"
+"  - `data`: If `user` is not None, this should be the result of calling\n"
+"    :func:`authGSSClientResponse` after :func:`authGSSClientUnwrap`.\n"
+"    If `user` is None, this should be a base64 encoded authorization\n"
+"    message as specified in Section 3.1 of RFC-4752.\n"
+"  - `user`: An optional string containing the user principal to authorize.\n"
 "\n"
 ":Returns: :data:`AUTH_GSS_COMPLETE`");
 

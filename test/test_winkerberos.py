@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import array
+import base64
 import mmap
 import os
 import sys
@@ -124,24 +125,34 @@ class TestWinKerberos(unittest.TestCase):
         unwrapped = kerberos.authGSSClientResponse(ctx)
         self.assertIsInstance(unwrapped, str)
 
-        # Try just rewrapping (no user)
-        res = kerberos.authGSSClientWrap(ctx, unwrapped)
+        # RFC-4752
+        challenge_bytes = base64.standard_b64decode(unwrapped)
+        self.assertEqual(4, len(challenge_bytes))
+
+        # Manually create an authorization message and encrypt it. This
+        # is the "no security layer" message as detailed in RFC-4752,
+        # section 3.1, final paragraph. This is also the message created
+        # by calling authGSSClientWrap with the "user" option.
+        msg = base64.standard_b64encode(
+            b"\x01\x00\x00\x00" + _UPN.encode("utf8")).decode("utf8")
+        res = kerberos.authGSSClientWrap(ctx, msg)
         self.assertEqual(res, 1)
 
-        wrapped = kerberos.authGSSClientResponse(ctx)
-        self.assertIsInstance(wrapped, str)
+        custom = kerberos.authGSSClientResponse(ctx)
+        self.assertIsInstance(custom, str)
 
-        # Actually complete authentication
+        # Wrap using unwrapped and user principal.
         res = kerberos.authGSSClientWrap(ctx, unwrapped, _UPN)
         self.assertEqual(res, 1)
 
         wrapped = kerberos.authGSSClientResponse(ctx)
         self.assertIsInstance(wrapped, str)
 
+        # Actually complete authentication, using our custom message.
         response = self.db.command(
            'saslContinue',
            conversationId=response['conversationId'],
-           payload=wrapped)
+           payload=custom)
         self.assertTrue(response['done'])
 
         self.assertIsInstance(kerberos.authGSSClientUsername(ctx), str)

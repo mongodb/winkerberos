@@ -44,7 +44,8 @@ Once you have the required compiler installed, just run the following command::
 Examples
 ========
 
-This is a simplified example of a complete authentication session:
+This is a simplified example of a complete authentication session
+following RFC-4752, section 3.1:
 
 .. code-block:: python
 
@@ -55,11 +56,11 @@ This is a simplified example of a complete authentication session:
         pass
 
     def authenticate_kerberos(service, user):
-        # Initialize the context object.
+        # Initialize the context object with a service principal.
         status, ctx = kerberos.authGSSClientInit(service)
 
-        # GSSAPI is a "client first" mechanism. Send the first
-        # "response" to the server and recieve its first
+        # GSSAPI is a "client goes first" SASL mechanism. Send the
+        # first "response" to the server and recieve its first
         # challenge.
         status = kerberos.authGSSClientStep(ctx, "")
         response = kerberos.authGSSClientResponse(ctx)
@@ -72,10 +73,10 @@ This is a simplified example of a complete authentication session:
             response = kerberos.authGSSClientResponse(ctx) or ''
             challenge = send_response_and_receive_challenge(response)
 
-        # Decrypt the server's authentication challenge
+        # Decrypt the server's last challenge
         kerberos.authGSSClientUnwrap(ctx, challenge)
         data = kerberos.authGSSClientResponse(ctx)
-        # Encrypt a response including the user to authenticate
+        # Encrypt a response including the user principal to authorize.
         kerberos.authGSSClientWrap(ctx, data, user)
         response = kerberos.authGSSClientResponse(ctx)
 
