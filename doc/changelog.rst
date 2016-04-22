@@ -1,8 +1,14 @@
 Changelog
 =========
 
-Changes in Verion 0.2.0
------------------------
+Changes in Version 0.3.0
+------------------------
+
+- Switched to InitializeSecurityContextW to better support unicode
+  service principal names.
+
+Changes in Version 0.2.0
+------------------------
 
 - The password parameter of :func:`~winkerberos.authGSSClientInit` can be a
   :class:`bytearray` or any other 8-bit string type that implements the buffer
