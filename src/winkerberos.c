@@ -636,7 +636,7 @@ initwinkerberos(VOID)
                            PyInt_FromLong(ISC_REQ_INTEGRITY)) ||
         PyModule_AddObject(module,
                            "__version__",
-                           PyString_FromString("0.3.0.dev0"))) {
+                           PyString_FromString("0.3.0"))) {
         Py_DECREF(KrbError);
         Py_DECREF(module);
         INITERROR;
