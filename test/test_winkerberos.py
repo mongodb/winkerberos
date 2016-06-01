@@ -170,9 +170,9 @@ class TestWinKerberos(unittest.TestCase):
         self.assertIsNone(kerberos.authGSSClientResponse(ctx))
         self.assertIsNone(kerberos.authGSSClientUsername(ctx))
         self.assertRaises(
-            kerberos.KrbError, kerberos.authGSSClientUnwrap, ctx, "foobar")
+            kerberos.GSSError, kerberos.authGSSClientUnwrap, ctx, "foobar")
         self.assertRaises(
-            kerberos.KrbError, kerberos.authGSSClientWrap, ctx, "foobar")
+            kerberos.GSSError, kerberos.authGSSClientWrap, ctx, "foobar")
 
     def test_arg_parsing(self):
 
@@ -254,14 +254,14 @@ class TestWinKerberos(unittest.TestCase):
         password = bytearray(_PASSWORD, "utf8")
         try:
             self.authenticate(password=password)
-        except kerberos.KrbError as exc:
+        except kerberos.GSSError as exc:
             self.fail("Failed bytearray: %s" % (str(exc),))
 
         # memoryview doesn't exist in python 2.6
         if sys.version_info[:2] >= (2, 7):
             try:
                 self.authenticate(password=memoryview(password))
-            except kerberos.KrbError as exc:
+            except kerberos.GSSError as exc:
                 self.fail("Failed memoryview: %s" % (str(exc),))
 
         # mmap.mmap and array.array only expose the
@@ -272,7 +272,7 @@ class TestWinKerberos(unittest.TestCase):
             mm.seek(0)
             try:
                 self.authenticate(password=mm)
-            except kerberos.KrbError as exc:
+            except kerberos.GSSError as exc:
                 self.fail("Failed map.map: %s" % (str(exc),))
 
             # Note that only ascii and utf8 strings are supported, so
@@ -280,6 +280,9 @@ class TestWinKerberos(unittest.TestCase):
             # must be encoded utf8 first.
             try:
                 self.authenticate(password=array.array('b', password))
-            except kerberos.KrbError as exc:
+            except kerberos.GSSError as exc:
                 self.fail("Failed array.array: %s" % (str(exc),))
 
+    def test_exception_hierarchy(self):
+        self.assertIsInstance(kerberos.KrbError(), Exception)
+        self.assertIsInstance(kerberos.GSSError(), kerberos.KrbError)

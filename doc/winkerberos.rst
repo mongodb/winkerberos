@@ -11,6 +11,8 @@
    .. autofunction:: authGSSClientUnwrap
    .. autofunction:: authGSSClientWrap
    .. autofunction:: authGSSClientClean
+   .. autoexception:: KrbError
+   .. autoexception:: GSSError
    .. data:: AUTH_GSS_COMPLETE
    .. data:: AUTH_GSS_CONTINUE
    .. data:: GSS_C_DELEG_FLAG

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Changes in Version 0.4.0
+------------------------
+
+- Added :exc:`~winkerberos.GSSError`, inheriting from
+  :exc:`~winkerberos.KrbError`, for compatibility with pykerberos. WinKerberos
+  now raises GSSError instead of KrbError. This change is backward compatible
+  for all existing applications.
+
 Changes in Version 0.3.0
 ------------------------
 

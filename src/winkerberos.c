@@ -37,8 +37,9 @@ PyDoc_STRVAR(winkerberos_documentation,
 "This module mimics the client API of pykerberos to implement\n"
 "Kerberos SSPI authentication on Microsoft Windows.");
 
-/* Note - also defined extern in kerberos_sspi.c */
 PyObject* KrbError;
+/* Note - also defined extern in kerberos_sspi.c */
+PyObject* GSSError;
 
 static BOOL
 _string_too_long(const SEC_CHAR* key, SIZE_T len) {
@@ -85,7 +86,7 @@ _py_buffer_to_wchar(PyObject* obj, WCHAR** out, Py_ssize_t* outlen) {
     result_len = MultiByteToWideChar(
         CP_UTF8, 0, (CHAR*)view.buf, (INT)view.len, outbuf, (INT)view.len);
     if (!result_len) {
-        set_krberror(GetLastError(), "MultiByteToWideChar failed");
+        set_gsserror(GetLastError(), "MultiByteToWideChar failed");
         free(outbuf);
         goto done;
     }
@@ -607,9 +608,21 @@ initwinkerberos(VOID)
     }
     Py_INCREF(KrbError);
     
+    GSSError = PyErr_NewException(
+        "winkerberos.GSSError", KrbError, NULL);
+    if (GSSError == NULL) {
+        Py_DECREF(KrbError);
+        Py_DECREF(module);
+        INITERROR;
+    }
+    Py_INCREF(GSSError);
+
     if (PyModule_AddObject(module,
                            "KrbError",
                            KrbError) ||
+        PyModule_AddObject(module,
+                           "GSSError",
+                           GSSError) ||
         PyModule_AddObject(module,
                            "AUTH_GSS_COMPLETE",
                            PyInt_FromLong(AUTH_GSS_COMPLETE)) ||
@@ -637,6 +650,7 @@ initwinkerberos(VOID)
         PyModule_AddObject(module,
                            "__version__",
                            PyString_FromString("0.4.0.dev0"))) {
+        Py_DECREF(GSSError);
         Py_DECREF(KrbError);
         Py_DECREF(module);
         INITERROR;

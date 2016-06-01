@@ -16,7 +16,7 @@
 
 #include "kerberos_sspi.h"
 
-extern PyObject* KrbError;
+extern PyObject* GSSError;
 
 VOID
 destroy_sspi_client_state(sspi_client_state* state) {
@@ -43,7 +43,7 @@ destroy_sspi_client_state(sspi_client_state* state) {
 }
 
 VOID
-set_krberror(DWORD errCode, const SEC_CHAR* msg) {
+set_gsserror(DWORD errCode, const SEC_CHAR* msg) {
     SEC_CHAR* err;
     DWORD status;
     DWORD flags = (FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -57,10 +57,10 @@ set_krberror(DWORD errCode, const SEC_CHAR* msg) {
                             0,
                             NULL);
     if (status) {
-        PyErr_Format(KrbError, "SSPI: %s: %s", msg, err);
+        PyErr_Format(GSSError, "SSPI: %s: %s", msg, err);
         LocalFree(err);
     } else {
-        PyErr_Format(KrbError, "SSPI: %s", msg);
+        PyErr_Format(GSSError, "SSPI: %s", msg);
     }
 }
 
@@ -88,7 +88,7 @@ base64_encode(const SEC_CHAR* value, DWORD vlen) {
             }
         }
     }
-    PyErr_Format(KrbError, "CryptBinaryToString failed.");
+    PyErr_Format(GSSError, "CryptBinaryToString failed.");
     return NULL;
 }
 
@@ -119,7 +119,7 @@ base64_decode(const SEC_CHAR* value, DWORD* rlen) {
             }
         }
     }
-    PyErr_Format(KrbError, "CryptStringToBinary failed.");
+    PyErr_Format(GSSError, "CryptStringToBinary failed.");
     return NULL;
 }
 
@@ -154,13 +154,13 @@ wide_to_utf8(WCHAR* value) {
             }
         }
     }
-    set_krberror(GetLastError(), "WideCharToMultiByte");
+    set_gsserror(GetLastError(), "WideCharToMultiByte");
     return NULL;
 }
 
 static VOID
 set_uninitialized_context(VOID) {
-    PyErr_SetString(KrbError,
+    PyErr_SetString(GSSError,
                     "Uninitialized security context. You must use "
                     "authGSSClientStep to initialize the security "
                     "context before calling this function.");
@@ -228,7 +228,7 @@ auth_sspi_client_init(WCHAR* service,
                                        /* Expiry (Required but unused by us) */
                                        &ignored);
     if (status != SEC_E_OK) {
-        set_krberror(status, "AcquireCredentialsHandle");
+        set_gsserror(status, "AcquireCredentialsHandle");
         return AUTH_GSS_ERROR;
     }
     state->haveCred = 1;
@@ -298,7 +298,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
                                         NULL);
     Py_END_ALLOW_THREADS
     if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED) {
-        set_krberror(status, "InitializeSecurityContext");
+        set_gsserror(status, "InitializeSecurityContext");
         status = AUTH_GSS_ERROR;
         goto done;
     }
@@ -317,7 +317,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
         status = QueryContextAttributesW(
             &state->ctx, SECPKG_ATTR_NAMES, &names);
         if (status != SEC_E_OK) {
-            set_krberror(status, "QueryContextAttributesW");
+            set_gsserror(status, "QueryContextAttributesW");
             status = AUTH_GSS_ERROR;
             goto done;
         }
@@ -377,7 +377,7 @@ auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge) {
     if (status == SEC_E_OK) {
         status = AUTH_GSS_COMPLETE;
     } else {
-        set_krberror(status, "DecryptMessage");
+        set_gsserror(status, "DecryptMessage");
         status = AUTH_GSS_ERROR;
         goto done;
     }
@@ -424,7 +424,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
 
     status = QueryContextAttributes(&state->ctx, SECPKG_ATTR_SIZES, &sizes);
     if (status != SEC_E_OK) {
-        set_krberror(status, "QueryContextAttributes");
+        set_gsserror(status, "QueryContextAttributes");
         return AUTH_GSS_ERROR;
     }
 
@@ -492,7 +492,7 @@ auth_sspi_client_wrap(sspi_client_state* state,
         &state->ctx, SECQOP_WRAP_NO_ENCRYPT, &wrapBufDesc, 0);
     if (status != SEC_E_OK) {
         free(inbuf);
-        set_krberror(status, "EncryptMessage");
+        set_gsserror(status, "EncryptMessage");
         return AUTH_GSS_ERROR;
     }
 
