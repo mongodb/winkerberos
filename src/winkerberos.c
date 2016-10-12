@@ -16,6 +16,8 @@
 
 #include "kerberos_sspi.h"
 
+#include <Shlwapi.h>
+
 #if PY_MAJOR_VERSION >= 3
 #define PyInt_FromLong PyLong_FromLong
 #define PyString_FromString PyUnicode_FromString
@@ -220,19 +222,34 @@ PyDoc_STRVAR(sspi_client_init_doc,
 "\n"
 ":Parameters:\n"
 "  - `service`: A string containing the service principal in RFC-2078 format\n"
-"    (service@hostname) or SPN format (service/hostname or\n"
-"    service/hostname@REALM).\n"
+"    (``service@hostname``) or SPN format (``service/hostname`` or\n"
+"    ``service/hostname@REALM``).\n"
 "  - `principal`: An optional string containing the user principal name in\n"
-"    the format 'user@realm'.\n"
+"    the format ``user@realm``. Can be unicode (str in python 3.x) or any 8 \n"
+"    bit string type that implements the buffer interface. A password can \n"
+"    be provided using the format ``user@realm:password``. The principal \n"
+"    and password can be percent encoded if either might include the ``:`` \n"
+"    character::\n"
+"\n"
+"      try:\n"
+"          # Python 3.x\n"
+"          from urllib.parse import quote\n"
+"      except ImportError:\n"
+"          # Python 2.x\n"
+"          from urllib import quote\n"
+"      principal = '%s:%s' % (\n"
+"          quote(user_principal), quote(password))\n"
+"\n"
+"    If the `user` parameter is provided `principal` is ignored.\n"
 "  - `gssflags`: An optional integer used to set GSS flags. Defaults to\n"
 "    GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG.\n"
-"  - `user`: An optional string that contains the name of the user whose\n"
-"    credentials should be used for authentication.\n"
-"  - `domain`: An optional string that contains the domain or workgroup name\n"
-"    for `user`.\n"
-"  - `password`: An optional string that contains the password for `user` in\n"
-"    `domain`. Can be unicode (str in python 3.x) or any 8 bit string type\n"
-"    that implements the buffer interface.\n"
+"  - `user` (DEPRECATED): An optional string that contains the name of the \n"
+"    user whose credentials should be used for authentication.\n"
+"  - `domain` (DEPRECATED): An optional string that contains the domain or \n"
+"    workgroup name for `user`.\n"
+"  - `password` (DEPRECATED): An optional string that contains the password \n"
+"    for `user` in `domain`. Can be unicode (str in python 3.x) or any 8 \n"
+"    bit string type that implements the buffer interface.\n"
 "\n"
 ":Returns: A tuple of (result, context) where result is\n"
 "          :data:`AUTH_GSS_COMPLETE` and context is an opaque value passed\n"
@@ -274,7 +291,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     }
 
     if (!StringObject_AsWCHAR(serviceobj, 1, FALSE, &service, &slen) ||
-        !StringObject_AsWCHAR(principalobj, 2, TRUE, &principal, &len) ||
+        !BufferObject_AsWCHAR(principalobj, &principal, &len) ||
         !StringObject_AsWCHAR(userobj, 4, TRUE, &user, &ulen) ||
         !StringObject_AsWCHAR(domainobj, 5, TRUE, &domain, &dlen) ||
         !BufferObject_AsWCHAR(passwordobj, &password, &plen) ||
@@ -282,6 +299,46 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         _string_too_long("domain", (SIZE_T)dlen) ||
         _string_too_long("password", (SIZE_T)plen)) {
         goto done;
+    }
+
+    /* Prefer (user, domain, password) for backward compatibility. */
+    if (!user && principal) {
+        WCHAR* userDomain = NULL;
+        HRESULT res;
+        /* Use (user, domain, password) or principal, not a mix of both. */
+        free(domain);
+        domain = NULL;
+        if (password) {
+            SecureZeroMemory(password, sizeof(WCHAR) * plen);
+            free(password);
+            password = NULL;
+        }
+        /* Support password as part of the principal parameter. */
+        if (wcschr(principal, L':')) {
+            WCHAR* next;
+            userDomain = _wcsdup(wcstok_s(principal, L":", &next));
+            password = _wcsdup(wcstok_s(NULL, L":", &next));
+        } else {
+            userDomain = _wcsdup(principal);
+        }
+        /* Support user principal or password including the : character. */
+        res = UrlUnescapeW(userDomain, NULL, NULL, URL_UNESCAPE_INPLACE);
+        if (res != S_OK) {
+            free(userDomain);
+            set_gsserror(res, "UrlUnescapeW");
+            goto done;
+        }
+        if (password) {
+            res = UrlUnescapeW(password, NULL, NULL, URL_UNESCAPE_INPLACE);
+            if (res != S_OK) {
+                free(userDomain);
+                set_gsserror(res, "UrlUnescapeW");
+                goto done;
+            }
+            plen = wcslen(password);
+        }
+        user = userDomain;
+        ulen = wcslen(userDomain);
     }
 
     state = (sspi_client_state*)malloc(sizeof(sspi_client_state));
@@ -297,7 +354,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     }
 
     result = auth_sspi_client_init(
-        service, principal, (ULONG)flags,
+        service, (ULONG)flags,
         user, (ULONG)ulen, domain, (ULONG)dlen, password, (ULONG)plen, state);
     if (result == AUTH_GSS_ERROR) {
         Py_DECREF(pyctx);
@@ -308,7 +365,11 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
 
 done:
     free(service);
-    free(principal);
+    /* The principal parameter can include a password. */
+    if (principal) {
+        SecureZeroMemory(principal, sizeof(WCHAR) * len);
+        free(principal);
+    }
     free(user);
     free(domain);
     if (password) {

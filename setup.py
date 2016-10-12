@@ -95,6 +95,7 @@ setup(
             "winkerberos",
             extra_link_args=['crypt32.lib',
                              'secur32.lib',
+                             'Shlwapi.lib',
                              '/NXCOMPAT',
                              '/DYNAMICBASE'],
             sources = [

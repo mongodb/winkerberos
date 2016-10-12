@@ -40,7 +40,6 @@ typedef struct {
 VOID set_gsserror(DWORD errCode, const SEC_CHAR* msg);
 VOID destroy_sspi_client_state(sspi_client_state* state);
 INT auth_sspi_client_init(WCHAR* service,
-                          WCHAR* principal,
                           ULONG flags,
                           WCHAR* user,
                           ULONG ulen,

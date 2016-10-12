@@ -64,7 +64,7 @@ class TestWinKerberos(unittest.TestCase):
 
     def authenticate(self,
                      service=_SPN,
-                     principal=_PRINCIPAL,
+                     principal=None,
                      flags=kerberos.GSS_C_MUTUAL_FLAG,
                      user=_USER,
                      domain=_DOMAIN,
@@ -96,7 +96,7 @@ class TestWinKerberos(unittest.TestCase):
     def test_authenticate(self):
         res, ctx = kerberos.authGSSClientInit(
             _SPN,
-            _PRINCIPAL,
+            None,
             kerberos.GSS_C_MUTUAL_FLAG,
             _USER,
             _DOMAIN,
@@ -160,7 +160,7 @@ class TestWinKerberos(unittest.TestCase):
     def test_uninitialized_context(self):
         res, ctx = kerberos.authGSSClientInit(
             _SPN,
-            _PRINCIPAL,
+            None,
             kerberos.GSS_C_MUTUAL_FLAG,
             _USER,
             _DOMAIN,
@@ -179,10 +179,6 @@ class TestWinKerberos(unittest.TestCase):
         self.assertRaises(TypeError,
                           kerberos.authGSSClientInit,
                           None)
-        self.assertRaises(TypeError,
-                          kerberos.authGSSClientInit,
-                          u"foo",
-                          bytearray())
         self.assertRaises(TypeError,
                           kerberos.authGSSClientInit,
                           u"foo",
@@ -235,10 +231,6 @@ class TestWinKerberos(unittest.TestCase):
             self.assertRaises(TypeError,
                               kerberos.authGSSClientInit,
                               "foo",
-                              b"foo")
-            self.assertRaises(TypeError,
-                              kerberos.authGSSClientInit,
-                              "foo",
                               "foo",
                               0,
                               b"foo")
@@ -282,6 +274,32 @@ class TestWinKerberos(unittest.TestCase):
                 self.authenticate(password=array.array('b', password))
             except kerberos.GSSError as exc:
                 self.fail("Failed array.array: %s" % (str(exc),))
+
+    def test_principal(self):
+        if _PRINCIPAL is None:
+            raise unittest.SkipTest("Must set KERBEROS_PRINCIPAL to test")
+        try:
+            self.authenticate(
+                principal=_PRINCIPAL, user=None, domain=None, password=None)
+        except kerberos.GSSError as exc:
+            self.fail("Failed testing principal: %s" % (str(exc),))
+
+        encoded = bytearray(_PRINCIPAL, "utf8")
+        # No error.
+        self.authenticate(
+            principal=encoded, user=None, domain=None, password=None)
+
+        # No error. For backward compatibility, the user parameter takes
+        # precedence.
+        self.authenticate(principal="somebogus@user:pass")
+
+        # Again, the user parameter takes precedence.
+        self.assertRaises(kerberos.GSSError,
+                          self.authenticate,
+                          principal=_PRINCIPAL,
+                          user='somebogus',
+                          domain='user',
+                          password='pass')
 
     def test_exception_hierarchy(self):
         self.assertIsInstance(kerberos.KrbError(), Exception)

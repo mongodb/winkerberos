@@ -168,7 +168,6 @@ set_uninitialized_context(VOID) {
 
 INT
 auth_sspi_client_init(WCHAR* service,
-                      WCHAR* principal,
                       ULONG flags,
                       WCHAR* user,
                       ULONG ulen,
@@ -209,8 +208,12 @@ auth_sspi_client_init(WCHAR* service,
         authIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
     }
 
-    status = AcquireCredentialsHandleW(/* Principal (NULL means current user) */
-                                       principal,
+    /* Note that the first paramater, pszPrincipal, appears to be
+     * completely ignored in the Kerberos SSP. For more details see
+     * https://github.com/mongodb-labs/winkerberos/issues/11.
+     * */
+    status = AcquireCredentialsHandleW(/* Principal */
+                                       NULL,
                                        /* Security package name */
                                        L"kerberos",
                                        /* Credentials Use */
