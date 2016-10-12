@@ -13,8 +13,9 @@
 # limitations under the License.
 
 import os
-import subprocess
 import sys
+
+from distutils.command.build_ext import build_ext
 
 try:
     from setuptools import setup, Extension
@@ -23,24 +24,37 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, Extension
 
-from distutils.command.build_ext import build_ext
+try:
+    import sphinx
+    _HAVE_SPHINX = True
+except ImportError:
+    _HAVE_SPHINX = False
+
 
 # Sphinx needs to import the built extension to generate
 # html docs, so build the extension inplace first.
 class doc(build_ext):
 
     def run(self):
+
+        if not _HAVE_SPHINX:
+            raise RuntimeError(
+                "You must install Sphinx to build the documentation.")
+
         self.inplace = True
         build_ext.run(self)
 
-        path = os.path.join("doc", "_build", "html")
+        path = os.path.join(os.path.abspath("."), "doc", "_build", "html")
 
-        status = subprocess.call(["sphinx-build",
-                                  "-E",
-                                  "-b",
-                                  "html",
-                                  "doc",
-                                  path])
+        sphinx_args = ["-E", "-b", "html", "doc", path]
+
+        # sphinx.main calls sys.exit when sphinx.build_main exists.
+        # Call build_main directly so we can check status and print
+        # the full path to the built docs.
+        if hasattr(sphinx, 'build_main'):
+            status = sphinx.build_main(sphinx_args)
+        else:
+            status = sphinx.main(sphinx_args)
 
         if status:
             raise RuntimeError("Documentation build failed")

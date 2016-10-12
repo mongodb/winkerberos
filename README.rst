@@ -37,9 +37,22 @@ The `Microsoft Visual C++ Compiler for Python 2.7
 <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_ could also
 be used to build for Python 2.6 and 2.7.
 
-Once you have the required compiler installed, just run the following command::
+Once you have the required compiler installed, run the following command from
+the root directory of the WinKerberos source::
 
     python setup.py install
+
+Building HTML documentation
+===========================
+
+First install `Sphinx <https://pypi.python.org/pypi/Sphinx>`_::
+
+    python -m pip install Sphinx
+
+Then run the following command from the root directory of the WinKerberos
+source::
+
+    python setup.py doc
 
 Examples
 ========
@@ -83,8 +96,8 @@ following RFC-4752, section 3.1:
         # Complete authentication.
         send_response_and_receive_challenge(response)
 
-Documentation
-=============
+Viewing API Documentation without Sphinx
+========================================
 
 Use the help function in the python interactive shell:
 

@@ -106,8 +106,12 @@ About This Documentation
 This documentation is generated using the `Sphinx
 <http://www.sphinx-doc.org/>`_ documentation generator. The source files
 for the documentation are located in the *doc/* directory of the 
-**WinKerberos** distribution. To generate the docs locally run the 
-following command from the root directory of the **WinKerberos** source::
+**WinKerberos** distribution. To generate the docs locally install Sphinx::
+
+  python -m pip install Sphinx
+
+Then run the following command from the root directory of the **WinKerberos**
+source::
 
   python setup.py doc
 
