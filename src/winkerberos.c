@@ -303,7 +303,6 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
 
     /* Prefer (user, domain, password) for backward compatibility. */
     if (!user && principal) {
-        WCHAR* userDomain = NULL;
         HRESULT res;
         /* Use (user, domain, password) or principal, not a mix of both. */
         free(domain);
@@ -315,36 +314,50 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         }
         /* Support password as part of the principal parameter. */
         if (wcschr(principal, L':')) {
+            WCHAR* current;
             WCHAR* next;
-            userDomain = _wcsdup(wcstok_s(principal, L":", &next));
-            password = _wcsdup(wcstok_s(NULL, L":", &next));
+            current = wcstok_s(principal, L":", &next);
+            if (!current) {
+                goto memoryerror;
+            }
+            user = _wcsdup(current);
+            if (!user) {
+                goto memoryerror;
+            }
+            current = wcstok_s(NULL, L":", &next);
+            if (!current) {
+                goto memoryerror;
+            }
+            password = _wcsdup(current);
+            if (!password) {
+                goto memoryerror;
+            }
         } else {
-            userDomain = _wcsdup(principal);
+            user = _wcsdup(principal);
+            if (!user) {
+                goto memoryerror;
+            }
         }
         /* Support user principal or password including the : character. */
-        res = UrlUnescapeW(userDomain, NULL, NULL, URL_UNESCAPE_INPLACE);
+        res = UrlUnescapeW(user, NULL, NULL, URL_UNESCAPE_INPLACE);
         if (res != S_OK) {
-            free(userDomain);
             set_gsserror(res, "UrlUnescapeW");
             goto done;
         }
         if (password) {
             res = UrlUnescapeW(password, NULL, NULL, URL_UNESCAPE_INPLACE);
             if (res != S_OK) {
-                free(userDomain);
                 set_gsserror(res, "UrlUnescapeW");
                 goto done;
             }
             plen = wcslen(password);
         }
-        user = userDomain;
-        ulen = wcslen(userDomain);
+        ulen = wcslen(user);
     }
 
     state = (sspi_client_state*)malloc(sizeof(sspi_client_state));
     if (state == NULL) {
-        PyErr_SetNone(PyExc_MemoryError);
-        goto done;
+        goto memoryerror;
     }
 
     pyctx = PyCObject_FromVoidPtr(state, &destroy_sspi_client);
@@ -362,6 +375,10 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     }
 
     resultobj =  Py_BuildValue("(iN)", result, pyctx);
+    goto done;
+
+memoryerror:
+    PyErr_SetNone(PyExc_MemoryError);
 
 done:
     free(service);
