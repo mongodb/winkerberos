@@ -492,6 +492,42 @@ sspi_client_response(PyObject* self, PyObject* args) {
     return Py_BuildValue("s", state->response);
 }
 
+PyDoc_STRVAR(sspi_client_response_conf_doc,
+"authGSSClientResponseConf(context)\n"
+"\n"
+"Determine whether confidentiality was enabled in the previously unwrapped\n"
+"buffer.\n"
+"\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
+"\n"
+":Returns: 1 if confidentiality was enabled in the previously unwrapped\n"
+"          buffer, 0 otherwise.\n"
+"\n"
+".. versionadded:: 0.5.0");
+
+static PyObject*
+sspi_client_response_conf(PyObject* self, PyObject* args) {
+    sspi_client_state* state;
+    PyObject* pyctx;
+
+    if (!PyArg_ParseTuple(args, "O", &pyctx)) {
+        return NULL;
+    }
+
+    if (!PyCObject_Check(pyctx)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a context object");
+        return NULL;
+    }
+
+    state = (sspi_client_state*)PyCObject_AsVoidPtr(pyctx);
+    if (state == NULL) {
+        return NULL;
+    }
+
+    return Py_BuildValue("i", state->qop != SECQOP_WRAP_NO_ENCRYPT);
+}
+
 PyDoc_STRVAR(sspi_client_username_doc,
 "authGSSClientUsername(context)\n"
 "\n"
@@ -571,7 +607,7 @@ sspi_client_unwrap(PyObject* self, PyObject* args) {
 }
 
 PyDoc_STRVAR(sspi_client_wrap_doc,
-"authGSSClientWrap(context, data, user=None)\n"
+"authGSSClientWrap(context, data, user=None, protect=0)\n"
 "\n"
 "Execute the client side EncryptMessage (GSSAPI Wrap) operation.\n"
 "\n"
@@ -582,8 +618,14 @@ PyDoc_STRVAR(sspi_client_wrap_doc,
 "    If `user` is None, this should be a base64 encoded authorization\n"
 "    message as specified in Section 3.1 of RFC-4752.\n"
 "  - `user`: An optional string containing the user principal to authorize.\n"
+"  - `protect`: If 0 (the default), then just provide integrity protection.\n"
+"    If 1, then provide confidentiality as well (requires passing\n"
+"    GSS_C_CONF_FLAG to gssflags in :func:`authGSSClientInit`).\n"
 "\n"
-":Returns: :data:`AUTH_GSS_COMPLETE`");
+":Returns: :data:`AUTH_GSS_COMPLETE`\n"
+"\n"
+".. versionchanged:: 0.5.0\n"
+"   Added the `protect` parameter.");
 
 static PyObject*
 sspi_client_wrap(PyObject* self, PyObject* args) {
@@ -592,9 +634,10 @@ sspi_client_wrap(PyObject* self, PyObject* args) {
     SEC_CHAR* data;
     SEC_CHAR* user = NULL;
     SIZE_T ulen = 0;
+    INT protect = 0;
     INT result;
 
-    if (!PyArg_ParseTuple(args, "Os|z", &pyctx, &data, &user)) {
+    if (!PyArg_ParseTuple(args, "Os|zi", &pyctx, &data, &user, &protect)) {
         return NULL;
     }
     if (user) {
@@ -617,7 +660,7 @@ sspi_client_wrap(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    result = auth_sspi_client_wrap(state, data, user, (ULONG)ulen);
+    result = auth_sspi_client_wrap(state, data, user, (ULONG)ulen, protect);
     if (result == AUTH_GSS_ERROR) {
         return NULL;
     }
@@ -634,6 +677,8 @@ static PyMethodDef WinKerberosClientMethods[] = {
      METH_VARARGS, sspi_client_step_doc},
     {"authGSSClientResponse", sspi_client_response,
      METH_VARARGS, sspi_client_response_doc},
+    {"authGSSClientResponseConf", sspi_client_response_conf,
+     METH_VARARGS, sspi_client_response_conf_doc},
     {"authGSSClientUsername", sspi_client_username,
      METH_VARARGS, sspi_client_username_doc},
     {"authGSSClientUnwrap", sspi_client_unwrap,

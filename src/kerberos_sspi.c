@@ -182,6 +182,7 @@ auth_sspi_client_init(WCHAR* service,
 
     state->response = NULL;
     state->username = NULL;
+    state->qop = SECQOP_WRAP_NO_ENCRYPT;
     state->flags = flags;
     state->haveCred = 0;
     state->haveCtx = 0;
@@ -358,6 +359,7 @@ auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge) {
     if (state->response != NULL) {
         free(state->response);
         state->response = NULL;
+        state->qop = SECQOP_WRAP_NO_ENCRYPT;
     }
 
     if (!state->haveCtx) {
@@ -376,7 +378,7 @@ auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge) {
     wrapBufs[1].cbBuffer = 0;
     wrapBufs[1].BufferType = SECBUFFER_DATA;
 
-    status = DecryptMessage(&state->ctx, &wrapBufDesc, 0, NULL);
+    status = DecryptMessage(&state->ctx, &wrapBufDesc, 0, &state->qop);
     if (status == SEC_E_OK) {
         status = AUTH_GSS_COMPLETE;
     } else {
@@ -402,7 +404,8 @@ INT
 auth_sspi_client_wrap(sspi_client_state* state,
                       SEC_CHAR* data,
                       SEC_CHAR* user,
-                      ULONG ulen) {
+                      ULONG ulen,
+                      INT protect) {
     SECURITY_STATUS status;
     SecPkgContext_Sizes sizes;
     SecBuffer wrapBufs[3];
@@ -492,7 +495,10 @@ auth_sspi_client_wrap(sspi_client_state* state,
         inbuf + (sizes.cbSecurityTrailer + plaintextMessageSize);
 
     status = EncryptMessage(
-        &state->ctx, SECQOP_WRAP_NO_ENCRYPT, &wrapBufDesc, 0);
+        &state->ctx,
+        protect ? 0 : SECQOP_WRAP_NO_ENCRYPT,
+        &wrapBufDesc,
+        0);
     if (status != SEC_E_OK) {
         free(inbuf);
         set_gsserror(status, "EncryptMessage");

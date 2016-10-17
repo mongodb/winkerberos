@@ -4,6 +4,8 @@ Changelog
 Changes in Version 0.5.0
 ------------------------
 
+- Added :func:`~winkerberos.authGSSClientResponseConf` and the `protect`
+  parameter to :func:`~winkerberos.authGSSClientWrap`.
 - Fixed support for the `principal` parameter of
   :func:`~winkerberos.authGSSClientInit`, which had no effect in previous
   versions.

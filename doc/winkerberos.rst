@@ -7,6 +7,7 @@
    .. autofunction:: authGSSClientInit
    .. autofunction:: authGSSClientStep
    .. autofunction:: authGSSClientResponse
+   .. autofunction:: authGSSClientResponseConf
    .. autofunction:: authGSSClientUsername
    .. autofunction:: authGSSClientUnwrap
    .. autofunction:: authGSSClientWrap

@@ -69,7 +69,8 @@ class TestWinKerberos(unittest.TestCase):
                      user=_USER,
                      domain=_DOMAIN,
                      password=_PASSWORD,
-                     upn=_UPN):
+                     upn=_UPN,
+                     protect=0):
             res, ctx = kerberos.authGSSClientInit(
                 service, principal, flags, user, domain, password)
             res = kerberos.authGSSClientStep(ctx, "")
@@ -86,7 +87,8 @@ class TestWinKerberos(unittest.TestCase):
             kerberos.authGSSClientUnwrap(ctx, response['payload'])
             kerberos.authGSSClientWrap(ctx,
                                        kerberos.authGSSClientResponse(ctx),
-                                       upn)
+                                       upn,
+                                       protect)
             response = self.db.command(
                'saslContinue',
                conversationId=response['conversationId'],
@@ -124,6 +126,7 @@ class TestWinKerberos(unittest.TestCase):
 
         unwrapped = kerberos.authGSSClientResponse(ctx)
         self.assertIsInstance(unwrapped, str)
+        self.assertIsInstance(kerberos.authGSSClientResponseConf(ctx), int)
 
         # RFC-4752
         challenge_bytes = base64.standard_b64decode(unwrapped)
@@ -300,6 +303,17 @@ class TestWinKerberos(unittest.TestCase):
                           user='somebogus',
                           domain='user',
                           password='pass')
+
+    def test_confidentiality(self):
+        # No error.
+        self.authenticate(
+            flags=kerberos.GSS_C_MUTUAL_FLAG | kerberos.GSS_C_CONF_FLAG,
+            protect=1)
+        self.assertRaises(
+            kerberos.GSSError,
+            self.authenticate,
+            flags=kerberos.GSS_C_MUTUAL_FLAG,
+            protect=1)
 
     def test_exception_hierarchy(self):
         self.assertIsInstance(kerberos.KrbError(), Exception)

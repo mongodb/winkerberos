@@ -35,6 +35,7 @@ typedef struct {
     ULONG flags;
     UCHAR haveCred;
     UCHAR haveCtx;
+    INT qop;
 } sspi_client_state;
 
 VOID set_gsserror(DWORD errCode, const SEC_CHAR* msg);
@@ -53,4 +54,5 @@ INT auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge);
 INT auth_sspi_client_wrap(sspi_client_state* state,
                           SEC_CHAR* data,
                           SEC_CHAR* user,
-                          ULONG ulen);
+                          ULONG ulen,
+                          INT protect);
