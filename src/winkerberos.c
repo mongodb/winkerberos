@@ -253,7 +253,11 @@ PyDoc_STRVAR(sspi_client_init_doc,
 "\n"
 ":Returns: A tuple of (result, context) where result is\n"
 "          :data:`AUTH_GSS_COMPLETE` and context is an opaque value passed\n"
-"          in subsequent function calls.");
+"          in subsequent function calls.\n"
+"\n"
+".. versionchanged:: 0.5.0\n"
+"  The `principal` parameter actually works now. Deprecated the `user`,\n"
+"  `domain`, and `password` parameters.");
 
 static PyObject*
 sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
