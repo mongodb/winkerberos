@@ -15,6 +15,12 @@
 import os
 import sys
 
+# http://bugs.python.org/issue15881
+try:
+    import multiprocessing
+except ImportError:
+    pass
+
 from distutils.command.build_ext import build_ext
 
 try:
