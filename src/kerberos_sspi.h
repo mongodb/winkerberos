@@ -26,6 +26,9 @@
 #define AUTH_GSS_COMPLETE 1
 #define AUTH_GSS_CONTINUE 0
 
+#define GSS_MECH_OID_KRB5 "Kerberos"
+#define GSS_MECH_OID_SPNEGO "Negotiate"
+
 typedef struct {
     CredHandle cred;
     CtxtHandle ctx;
@@ -48,6 +51,7 @@ INT auth_sspi_client_init(WCHAR* service,
                           ULONG dlen,
                           WCHAR* password,
                           ULONG plen,
+                          WCHAR* mechoid,
                           sspi_client_state* state);
 INT auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge);
 INT auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge);
