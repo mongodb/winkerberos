@@ -200,7 +200,7 @@ destroy_sspi_client(VOID* obj) {
 PyDoc_STRVAR(sspi_client_init_doc,
 "authGSSClientInit(service, principal=None, gssflags="
 "GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG, user=None, domain=None,"
-" password=None)\n"
+" password=None, mech_oid=GSS_MECH_OID_KRB5)\n"
 "\n"
 "Initializes a context for Kerberos SSPI client side authentication with\n"
 "the given service principal.\n"
@@ -250,6 +250,8 @@ PyDoc_STRVAR(sspi_client_init_doc,
 "  - `password` (DEPRECATED): An optional string that contains the password \n"
 "    for `user` in `domain`. Can be unicode (str in python 3.x) or any 8 \n"
 "    bit string type that implements the buffer interface.\n"
+"  - `mech_oid`: Optional GGS mech OID. Defaults to GSS_MECH_OID_KRB5.\n"
+"    Another posible value is GSS_MECH_OID_SPNEGO."
 "\n"
 ":Returns: A tuple of (result, context) where result is\n"
 "          :data:`AUTH_GSS_COMPLETE` and context is an opaque value passed\n"
@@ -269,24 +271,27 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     PyObject* userobj = Py_None;
     PyObject* domainobj = Py_None;
     PyObject* passwordobj = Py_None;
+    PyObject* mechoidobj = Py_None;
     WCHAR *service = NULL, *principal = NULL;
     WCHAR *user = NULL, *domain = NULL, *password = NULL;
-    Py_ssize_t slen, len, ulen, dlen, plen = 0;
+    WCHAR *mechoid = NULL;
+    Py_ssize_t slen, len, ulen, dlen, plen, mlen = 0;
     PyObject* resultobj = NULL;
     INT result = 0;
     static SEC_CHAR* keywords[] = {
-        "service", "principal", "gssflags", "user", "domain", "password", NULL};
+        "service", "principal", "gssflags", "user", "domain", "password", "mech_oid", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args,
                                      kw,
-                                     "O|OlOOO",
+                                     "O|OlOOOO",
                                      keywords,
                                      &serviceobj,
                                      &principalobj,
                                      &flags,
                                      &userobj,
                                      &domainobj,
-                                     &passwordobj)) {
+                                     &passwordobj,
+                                     &mechoidobj)) {
         return NULL;
     }
     if (flags < 0) {
@@ -299,6 +304,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         !StringObject_AsWCHAR(userobj, 4, TRUE, &user, &ulen) ||
         !StringObject_AsWCHAR(domainobj, 5, TRUE, &domain, &dlen) ||
         !BufferObject_AsWCHAR(passwordobj, &password, &plen) ||
+        !StringObject_AsWCHAR(mechoidobj, 7, TRUE, &mechoid, &mlen) ||
         _string_too_long("user", (SIZE_T)ulen) ||
         _string_too_long("domain", (SIZE_T)dlen) ||
         _string_too_long("password", (SIZE_T)plen)) {
@@ -359,6 +365,14 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         ulen = wcslen(user);
     }
 
+    if(!mechoid || !mlen) {
+        mechoid = _wcsdup(L"Kerberos");
+        if (!mechoid) {
+            goto memoryerror;
+        }
+        mlen = wcslen(mechoid);
+    }
+
     state = (sspi_client_state*)malloc(sizeof(sspi_client_state));
     if (state == NULL) {
         goto memoryerror;
@@ -372,7 +386,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
 
     result = auth_sspi_client_init(
         service, (ULONG)flags,
-        user, (ULONG)ulen, domain, (ULONG)dlen, password, (ULONG)plen, state);
+        user, (ULONG)ulen, domain, (ULONG)dlen, password, (ULONG)plen, mechoid, state);
     if (result == AUTH_GSS_ERROR) {
         Py_DECREF(pyctx);
         goto done;
@@ -397,6 +411,7 @@ done:
         SecureZeroMemory(password, sizeof(WCHAR) * plen);
         free(password);
     }
+    free(mechoid);
     return resultobj;
 }
 
@@ -774,6 +789,12 @@ initwinkerberos(VOID)
         PyModule_AddObject(module,
                            "GSS_C_INTEG_FLAG",
                            PyInt_FromLong(ISC_REQ_INTEGRITY)) ||
+        PyModule_AddObject(module,
+                           "GSS_MECH_OID_KRB5",
+                           PyString_FromString(GSS_MECH_OID_KRB5)) ||
+        PyModule_AddObject(module,
+                           "GSS_MECH_OID_SPNEGO",
+                           PyString_FromString(GSS_MECH_OID_SPNEGO)) ||
         PyModule_AddObject(module,
                            "__version__",
                            PyString_FromString("0.5.0"))) {
