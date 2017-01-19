@@ -274,8 +274,8 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     PyObject* mechoidobj = Py_None;
     WCHAR *service = NULL, *principal = NULL;
     WCHAR *user = NULL, *domain = NULL, *password = NULL;
-    WCHAR *mechoid = NULL;
-    Py_ssize_t slen, len, ulen, dlen, plen, mlen = 0;
+    Py_ssize_t slen, len, ulen, dlen, plen = 0;
+    WCHAR *mechoid = GSS_MECH_OID_KRB5;
     PyObject* resultobj = NULL;
     INT result = 0;
     static SEC_CHAR* keywords[] = {
@@ -304,7 +304,6 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         !StringObject_AsWCHAR(userobj, 4, TRUE, &user, &ulen) ||
         !StringObject_AsWCHAR(domainobj, 5, TRUE, &domain, &dlen) ||
         !BufferObject_AsWCHAR(passwordobj, &password, &plen) ||
-        !StringObject_AsWCHAR(mechoidobj, 7, TRUE, &mechoid, &mlen) ||
         _string_too_long("user", (SIZE_T)ulen) ||
         _string_too_long("domain", (SIZE_T)dlen) ||
         _string_too_long("password", (SIZE_T)plen)) {
@@ -365,12 +364,9 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         ulen = wcslen(user);
     }
 
-    if(!mechoid || !mlen) {
-        mechoid = _wcsdup(L"Kerberos");
-        if (!mechoid) {
-            goto memoryerror;
-        }
-        mlen = wcslen(mechoid);
+    if (mechoidobj != NULL && PyCapsule_CheckExact(mechoidobj)) {
+        const char * mechoidname = PyCapsule_GetName(mechoidobj);
+        mechoid = PyCapsule_GetPointer(mechoidobj, mechoidname);
     }
 
     state = (sspi_client_state*)malloc(sizeof(sspi_client_state));
@@ -411,7 +407,6 @@ done:
         SecureZeroMemory(password, sizeof(WCHAR) * plen);
         free(password);
     }
-    free(mechoid);
     return resultobj;
 }
 
@@ -791,10 +786,10 @@ initwinkerberos(VOID)
                            PyInt_FromLong(ISC_REQ_INTEGRITY)) ||
         PyModule_AddObject(module,
                            "GSS_MECH_OID_KRB5",
-                           PyString_FromString(GSS_MECH_OID_KRB5)) ||
+                           PyCapsule_New(GSS_MECH_OID_KRB5, "winkerberos.GSS_MECH_OID_KRB5", NULL)) ||
         PyModule_AddObject(module,
                            "GSS_MECH_OID_SPNEGO",
-                           PyString_FromString(GSS_MECH_OID_SPNEGO)) ||
+                           PyCapsule_New(GSS_MECH_OID_SPNEGO, "winkerberos.GSS_MECH_OID_SPNEGO", NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
                            PyString_FromString("0.5.0"))) {

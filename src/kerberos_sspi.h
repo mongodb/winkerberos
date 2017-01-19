@@ -26,8 +26,8 @@
 #define AUTH_GSS_COMPLETE 1
 #define AUTH_GSS_CONTINUE 0
 
-#define GSS_MECH_OID_KRB5 "Kerberos"
-#define GSS_MECH_OID_SPNEGO "Negotiate"
+#define GSS_MECH_OID_KRB5 L"Kerberos"
+#define GSS_MECH_OID_SPNEGO L"Negotiate"
 
 typedef struct {
     CredHandle cred;
