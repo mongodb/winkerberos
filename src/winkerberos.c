@@ -364,9 +364,16 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         ulen = wcslen(user);
     }
 
-    if (mechoidobj != NULL && PyCapsule_CheckExact(mechoidobj)) {
-        const char * mechoidname = PyCapsule_GetName(mechoidobj);
-        mechoid = PyCapsule_GetPointer(mechoidobj, mechoidname);
+    if (mechoidobj != NULL) {
+        if (!PyCObject_Check(mechoidobj)) {
+            PyErr_SetString(PyExc_TypeError, "Invalid type for mech_oid");
+            goto done;
+        } else {
+            mechoid = (WCHAR*)PyCObject_AsVoidPtr(mechoidobj);
+            if (mechoid == NULL) {
+                goto done;
+            }
+        }
     }
 
     state = (sspi_client_state*)malloc(sizeof(sspi_client_state));
@@ -786,13 +793,13 @@ initwinkerberos(VOID)
                            PyInt_FromLong(ISC_REQ_INTEGRITY)) ||
         PyModule_AddObject(module,
                            "GSS_MECH_OID_KRB5",
-                           PyCapsule_New(GSS_MECH_OID_KRB5, "winkerberos.GSS_MECH_OID_KRB5", NULL)) ||
+                           PyCObject_FromVoidPtr(GSS_MECH_OID_KRB5, NULL)) ||
         PyModule_AddObject(module,
                            "GSS_MECH_OID_SPNEGO",
-                           PyCapsule_New(GSS_MECH_OID_SPNEGO, "winkerberos.GSS_MECH_OID_SPNEGO", NULL)) ||
+                           PyCObject_FromVoidPtr(GSS_MECH_OID_SPNEGO, NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
-                           PyString_FromString("0.5.0"))) {
+                           PyString_FromString("0.6.0.dev0"))) {
         Py_DECREF(GSSError);
         Py_DECREF(KrbError);
         Py_DECREF(module);
