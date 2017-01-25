@@ -9,3 +9,4 @@ doc/_build/
 *.egg
 .eggs/
 winkerberos.egg-info/
+.idea

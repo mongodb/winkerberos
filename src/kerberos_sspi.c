@@ -175,6 +175,7 @@ auth_sspi_client_init(WCHAR* service,
                       ULONG dlen,
                       WCHAR* password,
                       ULONG plen,
+                      WCHAR* mechoid,
                       sspi_client_state* state) {
     SECURITY_STATUS status;
     SEC_WINNT_AUTH_IDENTITY_W authIdentity;
@@ -216,7 +217,7 @@ auth_sspi_client_init(WCHAR* service,
     status = AcquireCredentialsHandleW(/* Principal */
                                        NULL,
                                        /* Security package name */
-                                       L"kerberos",
+                                       mechoid,
                                        /* Credentials Use */
                                        SECPKG_CRED_OUTBOUND,
                                        /* LogonID (We don't use this) */
