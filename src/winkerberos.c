@@ -368,11 +368,11 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         if (!PyCObject_Check(mechoidobj)) {
             PyErr_SetString(PyExc_TypeError, "Invalid type for mech_oid");
             goto done;
-        } else {
-            mechoid = (WCHAR*)PyCObject_AsVoidPtr(mechoidobj);
-            if (mechoid == NULL) {
-                goto done;
-            }
+        }
+        mechoid = (WCHAR*)PyCObject_AsVoidPtr(mechoidobj);
+        if (mechoid == NULL) {
+            PyErr_SetString(PyExc_TypeError, "Invalid value for mech_oid");
+            goto done;
         }
     }
 
