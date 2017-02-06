@@ -364,7 +364,7 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         ulen = wcslen(user);
     }
 
-    if (mechoidobj != NULL) {
+    if (mechoidobj != Py_None) {
         if (!PyCObject_Check(mechoidobj)) {
             PyErr_SetString(PyExc_TypeError, "Invalid type for mech_oid");
             goto done;
