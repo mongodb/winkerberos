@@ -69,10 +69,11 @@ class TestWinKerberos(unittest.TestCase):
                      user=_USER,
                      domain=_DOMAIN,
                      password=_PASSWORD,
+                     mech_oid=kerberos.GSS_MECH_OID_KRB5,
                      upn=_UPN,
                      protect=0):
             res, ctx = kerberos.authGSSClientInit(
-                service, principal, flags, user, domain, password)
+                service, principal, flags, user, domain, password, mech_oid)
             res = kerberos.authGSSClientStep(ctx, "")
             payload = kerberos.authGSSClientResponse(ctx)
             response = self.db.command(
@@ -314,6 +315,13 @@ class TestWinKerberos(unittest.TestCase):
             self.authenticate,
             flags=kerberos.GSS_C_MUTUAL_FLAG,
             protect=1)
+
+    def test_mech_oid(self):
+        # No error.
+        self.authenticate(mech_oid=kerberos.GSS_MECH_OID_KRB5)
+        # No error here either, since the two sides
+        # negotiate kerberos automatically.
+        self.authenticate(mech_oid=kerberos.GSS_MECH_OID_SPNEGO)
 
     def test_exception_hierarchy(self):
         self.assertIsInstance(kerberos.KrbError(), Exception)
