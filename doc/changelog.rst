@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in Version 0.6.0
+------------------------
+
+- Added the `mech_oid` parameter to :func:`~winkerberos.authGSSClientInit`.
+  Thanks go to Alexey Veklov for the patch.
+
 Changes in Version 0.5.0
 ------------------------
 

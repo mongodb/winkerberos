@@ -22,5 +22,7 @@
    .. data:: GSS_C_SEQUENCE_FLAG
    .. data:: GSS_C_CONF_FLAG
    .. data:: GSS_C_INTEG_FLAG
+   .. data:: GSS_MECH_OID_KRB5
+   .. data:: GSS_MECH_OID_SPNEGO
    .. data:: __version__
 

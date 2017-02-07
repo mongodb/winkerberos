@@ -259,7 +259,9 @@ PyDoc_STRVAR(sspi_client_init_doc,
 "\n"
 ".. versionchanged:: 0.5.0\n"
 "  The `principal` parameter actually works now. Deprecated the `user`,\n"
-"  `domain`, and `password` parameters.");
+"  `domain`, and `password` parameters.\n"
+".. versionchanged:: 0.6.0\n"
+"  Added support for the `mech_oid` parameter.\n");
 
 static PyObject*
 sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
