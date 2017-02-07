@@ -16,11 +16,9 @@
 
 #define SECURITY_WIN32 1 /* Required for SSPI */
 
-#include <Python.h>
+#include "Python.h"
 #include <Windows.h>
-#include <limits.h>
 #include <sspi.h>
-#include <string.h>
 
 #define AUTH_GSS_ERROR -1
 #define AUTH_GSS_COMPLETE 1
