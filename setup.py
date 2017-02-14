@@ -84,7 +84,7 @@ else:
 
 setup(
     name="winkerberos",
-    version="0.6.0.dev0",
+    version="0.6.0",
     description="High level interface to SSPI for Kerberos client auth",
     long_description=readme,
     author="Bernie Hackett",
