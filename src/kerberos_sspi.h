@@ -36,7 +36,7 @@ typedef struct {
     ULONG flags;
     UCHAR haveCred;
     UCHAR haveCtx;
-    INT qop;
+    ULONG qop;
 } sspi_client_state;
 
 VOID set_gsserror(DWORD errCode, const SEC_CHAR* msg);
