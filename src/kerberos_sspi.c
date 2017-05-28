@@ -240,15 +240,89 @@ auth_sspi_client_init(WCHAR* service,
     return AUTH_GSS_COMPLETE;
 }
 
+# define TLS_SERVER_END_POINT "tls-server-end-point:"
+
+SecPkgContext_Bindings* tls_get_channel_bindings() {
+    // The length of tls-server-end-point:
+    int prefix_length = 21;
+
+    // The length of the certificate hash
+    int certificate_hash_length = 32;
+    BYTE certificate_hash[32] = {
+        0xd0, 0x14, 0x02, 0xe0,
+        0xf1, 0x6f, 0x30, 0xdd,
+        0x71, 0xb0, 0x2b, 0x65,
+        0x5a, 0xd7, 0xfc, 0x7b,
+        0x0a, 0xda, 0x73, 0xdf,
+        0x5f, 0xbd, 0x81, 0x34,
+        0x02, 0x7a, 0x79, 0x4f,
+        0xfa, 0x1e, 0xec, 0xe8
+    };
+
+    BYTE* channel_binding_token;
+    int channel_binding_token_length;
+    SEC_CHANNEL_BINDINGS* channel_bindings;
+    SecPkgContext_Bindings* context_bindings;
+
+    // tls-server-endpoint:{certificate-hash}
+    channel_binding_token_length = prefix_length + certificate_hash_length;
+
+    context_bindings = (SecPkgContext_Bindings*) malloc(sizeof(SecPkgContext_Bindings));
+    // Zero the memory
+    ZeroMemory(context_bindings, sizeof(SecPkgContext_Bindings));
+
+    // Set the length of the bindings to the size of SEC_CHANNEL_BINDINGS plus the data itself
+    context_bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + channel_binding_token_length;
+
+    // Build the SEC_CHANNEL_BINDINGS struct
+    channel_bindings = (SEC_CHANNEL_BINDINGS*) malloc(context_bindings->BindingsLength);
+    // Zero the memory
+    ZeroMemory(channel_bindings, context_bindings->BindingsLength);
+    context_bindings->Bindings = channel_bindings;
+
+    // Length of appdata is the size of 'tls-server-endpoint:{certificate-hash}'
+    channel_bindings->cbApplicationDataLength = channel_binding_token_length;
+    channel_bindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
+
+    // ?
+    channel_binding_token = &((BYTE*) channel_bindings)[channel_bindings->dwApplicationDataOffset];
+
+    strcpy((char*) channel_binding_token, TLS_SERVER_END_POINT);
+    CopyMemory(&channel_binding_token[prefix_length], certificate_hash, certificate_hash_length);
+
+    return context_bindings;
+}
+
+void print_bytes(const void *object, size_t size)
+{
+  const unsigned char * const bytes = object;
+  size_t i;
+
+  printf("[ ");
+  for(i = 0; i < size; i++)
+  {
+    printf("%02x ", bytes[i]);
+  }
+  printf("]\n");
+}
+
 INT
 auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
+    SecBufferDesc firstinbuf;
+    SecBuffer firstinBufs[1];
+
     SecBufferDesc inbuf;
-    SecBuffer inBufs[1];
+    SecBuffer inBufs[2];
     SecBufferDesc outbuf;
     SecBuffer outBufs[1];
     ULONG ignored;
     SECURITY_STATUS status = AUTH_GSS_CONTINUE;
     DWORD len;
+
+    SecPkgContext_Bindings* sec_pkg_context_bindings;
+    int i;
+
+    sec_pkg_context_bindings = tls_get_channel_bindings();
 
     if (state->response != NULL) {
         free(state->response);
@@ -256,18 +330,43 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
     }
 
     inbuf.ulVersion = SECBUFFER_VERSION;
-    inbuf.cBuffers = 1;
+    inbuf.cBuffers = 2;
     inbuf.pBuffers = inBufs;
-    inBufs[0].pvBuffer = NULL;
-    inBufs[0].cbBuffer = 0;
-    inBufs[0].BufferType = SECBUFFER_TOKEN;
+    inBufs[1].pvBuffer = NULL;
+    inBufs[1].cbBuffer = 0;
+    inBufs[1].BufferType = SECBUFFER_TOKEN;
     if (state->haveCtx) {
-        inBufs[0].pvBuffer = base64_decode(challenge, &len);
-        if (!inBufs[0].pvBuffer) {
+        inBufs[1].pvBuffer = base64_decode(challenge, &len);
+        if (!inBufs[1].pvBuffer) {
             return AUTH_GSS_ERROR;
         }
-        inBufs[0].cbBuffer = len;
+        inBufs[1].cbBuffer = len;
     }
+
+    firstinbuf.ulVersion = SECBUFFER_VERSION;
+    firstinbuf.cBuffers = 1;
+    firstinbuf.pBuffers = firstinBufs;
+
+    firstinBufs[0].pvBuffer = sec_pkg_context_bindings->Bindings;
+    firstinBufs[0].cbBuffer = sec_pkg_context_bindings->BindingsLength;
+    firstinBufs[0].BufferType = SECBUFFER_CHANNEL_BINDINGS;
+
+    inBufs[0].pvBuffer = sec_pkg_context_bindings->Bindings;
+    inBufs[0].cbBuffer = sec_pkg_context_bindings->BindingsLength;
+    inBufs[0].BufferType = SECBUFFER_CHANNEL_BINDINGS;
+
+    printf("BufferType: %d\n", SECBUFFER_CHANNEL_BINDINGS);
+
+    printf("Length: %d\n", sec_pkg_context_bindings->BindingsLength);
+    printf("dwInitiatorAddrType: %d\n", sec_pkg_context_bindings->Bindings->dwInitiatorAddrType);
+    printf("cbInitiatorLength: %d\n", sec_pkg_context_bindings->Bindings->cbInitiatorLength);
+    printf("dwInitiatorOffset: %d\n", sec_pkg_context_bindings->Bindings->dwInitiatorOffset);
+    printf("dwAcceptorAddrType: %d\n", sec_pkg_context_bindings->Bindings->dwAcceptorAddrType);
+    printf("cbAcceptorLength: %d\n", sec_pkg_context_bindings->Bindings->cbAcceptorLength);
+    printf("dwAcceptorOffset: %d\n", sec_pkg_context_bindings->Bindings->dwAcceptorOffset);
+    printf("cbApplicationDataLength: %d\n", sec_pkg_context_bindings->Bindings->cbApplicationDataLength);
+    printf("dwApplicationDataOffset: %d\n", sec_pkg_context_bindings->Bindings->dwApplicationDataOffset);
+    print_bytes(sec_pkg_context_bindings->Bindings, sec_pkg_context_bindings->BindingsLength);
 
     outbuf.ulVersion = SECBUFFER_VERSION;
     outbuf.cBuffers = 1;
@@ -290,7 +389,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
                                         /* Target data representation */
                                         SECURITY_NETWORK_DREP,
                                         /* Challenge (NULL on first call) */
-                                        state->haveCtx ? &inbuf : NULL,
+                                        state->haveCtx ? &inbuf : &firstinbuf,
                                         /* Always 0 */
                                         0,
                                         /* CtxtHandle (Set on first call) */
