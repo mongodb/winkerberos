@@ -53,6 +53,13 @@ following RFC-4752, section 3.1:
 
     import winkerberos as kerberos
 
+    def get_channel_binding_struct(response):
+        # This is 'tls-server-end-point:' + certificate hash of the server
+        application_data = b'tls-server-end-point:D01402E0F16F30ED71B02B655AD71C7B0ADA73DE5FBD8134021A794FFA1EECE8'
+        channel_bindings = kerberos.buildChannelBindingsStruct(application_data=application_data)
+
+        return channel_bindings
+
     def send_response_and_receive_challenge(response):
         # Your server communication code here...
         pass
@@ -68,10 +75,23 @@ following RFC-4752, section 3.1:
         response = kerberos.authGSSClientResponse(ctx)
         challenge = send_response_and_receive_challenge(response)
 
+        # OPTIONAL - Get Channel Bindings Struct to bind the TLS
+        # channel to Kerberos Credentials. This is known as extended
+        # protection in Microsoft. If this step isn't done then
+        # no bindings are done
+        # RFC5929 - Channel Bindings for TLS
+        channel_bindings = get_channel_binding_struct(response)
+
         # Keep processing challenges and sending responses until
         # authGSSClientStep reports AUTH_GSS_COMPLETE.
         while status == kerberos.AUTH_GSS_CONTINUE:
+            # When not wanting to pass in the Channel Bindings Struct
             status = kerberos.authGSSClientStep(ctx, challenge)
+
+            # When passing in the Channel Bindings Struct
+            status = kerberos.authGSSClientStep(ctx, challenge,
+                    input_chan_bindings=channel_bindings)
+
             response = kerberos.authGSSClientResponse(ctx) or ''
             challenge = send_response_and_receive_challenge(response)
 

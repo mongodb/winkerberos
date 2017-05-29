@@ -440,15 +440,16 @@ sspi_client_clean(PyObject* self, PyObject* args) {
 #if PY_MAJOR_VERSION >= 3
 void destruct_channel_bindings_struct(PyObject* o) {
     SecPkgContext_Bindings* context_bindings;
+    int offset = sizeof(SEC_CHANNEL_BINDINGS);
     context_bindings = PyCapsule_GetPointer(o, NULL);
 #else
 void destruct_channel_bindings_struct(void* o) {
     SecPkgContext_Bindings* context_bindings;
+    int offset = sizeof(SEC_CHANNEL_BINDINGS);
     context_bindings = (SecPkgContext_Bindings *)o;
 #endif
 
     if (context_bindings != NULL) {
-        // TODO: Determine if data has been set after SEC_CHANNEL_BINDINGS
         free(context_bindings);
     }
 }
@@ -485,25 +486,27 @@ PyDoc_STRVAR(sspi_build_channel_bindings_struct_doc,
 "that can be passed onto L{authGSSClientStep}.");
 static PyObject*
 sspi_build_channel_bindings_struct(PyObject* self, PyObject* args, PyObject* keywds) {
+    static char *kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
+        "acceptor_address", "application_data", NULL};
+    SEC_CHANNEL_BINDINGS* channel_bindings;
+    SecPkgContext_Bindings* context_bindings;
+    PyObject *pychan_bindings = NULL;
+    int result = 0;
     int initiator_addrtype = 0;
     int acceptor_addrtype = 0;
     int offset = 0;
-    int result = 0;
+    int data_length = 0;
+
+    int *initiator_length = 0;
+    int *acceptor_length = 0;
+    int *application_length = 0;
+
+    unsigned char* offset_p = NULL;
+
     const char *encoding = NULL;
     char **initiator_address = NULL;
     char **acceptor_address = NULL;
     char **application_data = NULL;
-    int *initiator_length = 0;
-    int *acceptor_length = 0;
-    int *application_length = 0;
-    PyObject *pychan_bindings = NULL;
-
-    BYTE* channel_binding_token;
-    SEC_CHANNEL_BINDINGS* channel_bindings;
-    SecPkgContext_Bindings* context_bindings;
-
-    static char *kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
-        "acceptor_address", "application_data", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iet#iet#et#", kwlist,
             &initiator_addrtype, &encoding, &initiator_address, &initiator_length,
@@ -512,12 +515,11 @@ sspi_build_channel_bindings_struct(PyObject* self, PyObject* args, PyObject* key
         return NULL;
     }
 
-    // Thanks to marcandre.moreau, modified slightly for compatibility with ccs-kerberos
-    // https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/3ecb99c5-542e-4bcd-a808-116eb915cff8/enabling-channel-binding-for-kerberos-authentication-in-a-3rd-party-library-openssl?forum=windowssecurity
+    data_length = (int)initiator_length + (int)acceptor_length + (int)application_length;
     offset = sizeof(SEC_CHANNEL_BINDINGS);
 
     context_bindings = (SecPkgContext_Bindings *) malloc(sizeof(SecPkgContext_Bindings));
-    context_bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + application_length;
+    context_bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + data_length;
 
     channel_bindings = (SEC_CHANNEL_BINDINGS*) malloc(context_bindings->BindingsLength);
     context_bindings->Bindings = channel_bindings;
@@ -526,7 +528,11 @@ sspi_build_channel_bindings_struct(PyObject* self, PyObject* args, PyObject* key
     channel_bindings->cbInitiatorLength = initiator_length;
     if (initiator_address != NULL) {
         channel_bindings->dwInitiatorOffset = offset;
-        offset = offset + initiator_length;
+
+        offset_p = &((unsigned char*) channel_bindings)[offset];
+        memcpy(&offset_p[0], initiator_address, initiator_length);
+        PyMem_Free(initiator_address);
+        offset = offset + (int)initiator_length;
     } else {
         channel_bindings->dwInitiatorOffset = 0;
     }
@@ -535,7 +541,11 @@ sspi_build_channel_bindings_struct(PyObject* self, PyObject* args, PyObject* key
     channel_bindings->cbAcceptorLength = acceptor_length;
     if (acceptor_address != NULL) {
         channel_bindings->dwAcceptorOffset = offset;
-        offset = offset + acceptor_length;
+
+        offset_p = &((unsigned char*) channel_bindings)[offset];
+        memcpy(&offset_p[0], acceptor_address, acceptor_length);
+        PyMem_Free(acceptor_address);
+        offset = offset + (int)acceptor_length;
     } else {
         channel_bindings->dwAcceptorOffset = 0;
     }
@@ -543,12 +553,12 @@ sspi_build_channel_bindings_struct(PyObject* self, PyObject* args, PyObject* key
     channel_bindings->cbApplicationDataLength = application_length;
     if (application_data != NULL) {
         channel_bindings->dwApplicationDataOffset = offset;
+        offset_p = &((unsigned char*) channel_bindings)[offset];
+        memcpy(&offset_p[0], application_data, application_length);
+        PyMem_Free(application_data);
     } else {
         channel_bindings->dwApplicationDataOffset = 0;
     }
-
-    channel_binding_token = &((BYTE*) channel_bindings)[channel_bindings->dwApplicationDataOffset];
-    CopyMemory(&channel_binding_token[0], application_data, application_length);
 
     pychan_bindings = PyCObject_FromVoidPtr(context_bindings, &destruct_channel_bindings_struct);
 
@@ -938,7 +948,7 @@ initwinkerberos(VOID)
                            PyCObject_FromVoidPtr(GSS_MECH_OID_SPNEGO, NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
-                           PyString_FromString("0.6.0"))) {
+                           PyString_FromString("0.7.0"))) {
         Py_DECREF(GSSError);
         Py_DECREF(KrbError);
         Py_DECREF(module);
