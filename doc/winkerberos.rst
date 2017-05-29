@@ -12,6 +12,7 @@
    .. autofunction:: authGSSClientUnwrap
    .. autofunction:: authGSSClientWrap
    .. autofunction:: authGSSClientClean
+   .. autofunction:: buildChannelBindingsStruct
    .. autoexception:: KrbError
    .. autoexception:: GSSError
    .. data:: AUTH_GSS_COMPLETE
@@ -22,6 +23,7 @@
    .. data:: GSS_C_SEQUENCE_FLAG
    .. data:: GSS_C_CONF_FLAG
    .. data:: GSS_C_INTEG_FLAG
+   .. data:: GSS_C_AF_UNSPEC
    .. data:: GSS_MECH_OID_KRB5
    .. data:: GSS_MECH_OID_SPNEGO
    .. data:: __version__
