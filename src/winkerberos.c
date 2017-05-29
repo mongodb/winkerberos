@@ -437,8 +437,126 @@ sspi_client_clean(PyObject* self, PyObject* args) {
     return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
 
+#if PY_MAJOR_VERSION >= 3
+void destruct_channel_bindings_struct(PyObject* o) {
+    SecPkgContext_Bindings* context_bindings;
+    context_bindings = PyCapsule_GetPointer(o, NULL);
+#else
+void destruct_channel_bindings_struct(void* o) {
+    SecPkgContext_Bindings* context_bindings;
+    context_bindings = (SecPkgContext_Bindings *)o;
+#endif
+
+    if (context_bindings != NULL) {
+        // TODO: Determine if data has been set after SEC_CHANNEL_BINDINGS
+        free(context_bindings);
+    }
+}
+
+PyDoc_STRVAR(sspi_build_channel_bindings_struct_doc,
+"buildChannelBindingsStruct(**kwargs)\n"
+"\n"
+"Builds a SecPkgContext_Bindings struct and returns a pointer to this struct.\n"
+"This struct can then be passed into `authGSSClientStep` under the\n"
+"input_chan_bindings kwarg argument. The SecPkgContext_bindings object\n"
+"destroys itself when it is reclaimed. While the parameters supported by this\n"
+"method match the structure of the GSSAPI gss_channel_bindings_t\n"
+"https://docs.oracle.com/cd/E19455-01/806-3814/overview-52/index.html\n"
+"Windows only uses the application_data parameter for now. The other\n"
+"parameters are kept for compatibility with ccs-kerberos and future\n"
+"compatibility.\n"
+"\n"
+":Parameters:\n"
+"  - `initiator_addrtype`: Optional int of the initiator address type,\n"
+"    default is GSS_C_AF_UNSPEC (0).\n"
+"  - `initiator_address`: Optional byte string of the initiator address,\n"
+"    leave blank for SSPI operations.\n"
+"  - `acceptor_addrtype`: Optional int of the acceptor address type,\n"
+"    default is GSS_C_AF_UNSPEC (0).\n"
+"  - `acceptor_address`: Optional byte string of the acceptor address,\n"
+"    leave blank for SSPI operations.\n"
+"  - `application_data`: Optional byte string that should be set under the\n"
+"    application_data field. An example of this would be\n"
+"    'tls-server-endpoint:{cert-hash}' where {cert-hash} is the hash of the\n"
+"    server's certificate.\n"
+"\n"
+":Returns: A tuple of (result, SecPkgContext_Bindings*) where result is the\n"
+"result code and SecPkgContext_Bindings is the channel bindings structure\n"
+"that can be passed onto L{authGSSClientStep}.");
+static PyObject*
+sspi_build_channel_bindings_struct(PyObject* self, PyObject* args, PyObject* keywds) {
+    int initiator_addrtype = 0;
+    int acceptor_addrtype = 0;
+    int offset = 0;
+    int result = 0;
+    const char *encoding = NULL;
+    char **initiator_address = NULL;
+    char **acceptor_address = NULL;
+    char **application_data = NULL;
+    int *initiator_length = 0;
+    int *acceptor_length = 0;
+    int *application_length = 0;
+    PyObject *pychan_bindings = NULL;
+
+    BYTE* channel_binding_token;
+    SEC_CHANNEL_BINDINGS* channel_bindings;
+    SecPkgContext_Bindings* context_bindings;
+
+    static char *kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
+        "acceptor_address", "application_data", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iet#iet#et#", kwlist,
+            &initiator_addrtype, &encoding, &initiator_address, &initiator_length,
+            &acceptor_addrtype, &encoding, &acceptor_address, &acceptor_length,
+            &encoding, &application_data, &application_length)) {
+        return NULL;
+    }
+
+    // Thanks to marcandre.moreau, modified slightly for compatibility with ccs-kerberos
+    // https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/3ecb99c5-542e-4bcd-a808-116eb915cff8/enabling-channel-binding-for-kerberos-authentication-in-a-3rd-party-library-openssl?forum=windowssecurity
+    offset = sizeof(SEC_CHANNEL_BINDINGS);
+
+    context_bindings = (SecPkgContext_Bindings *) malloc(sizeof(SecPkgContext_Bindings));
+    context_bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + application_length;
+
+    channel_bindings = (SEC_CHANNEL_BINDINGS*) malloc(context_bindings->BindingsLength);
+    context_bindings->Bindings = channel_bindings;
+
+    channel_bindings->dwInitiatorAddrType = initiator_addrtype;
+    channel_bindings->cbInitiatorLength = initiator_length;
+    if (initiator_address != NULL) {
+        channel_bindings->dwInitiatorOffset = offset;
+        offset = offset + initiator_length;
+    } else {
+        channel_bindings->dwInitiatorOffset = 0;
+    }
+
+    channel_bindings->dwAcceptorAddrType = acceptor_addrtype;
+    channel_bindings->cbAcceptorLength = acceptor_length;
+    if (acceptor_address != NULL) {
+        channel_bindings->dwAcceptorOffset = offset;
+        offset = offset + acceptor_length;
+    } else {
+        channel_bindings->dwAcceptorOffset = 0;
+    }
+
+    channel_bindings->cbApplicationDataLength = application_length;
+    if (application_data != NULL) {
+        channel_bindings->dwApplicationDataOffset = offset;
+    } else {
+        channel_bindings->dwApplicationDataOffset = 0;
+    }
+
+    channel_binding_token = &((BYTE*) channel_bindings)[channel_bindings->dwApplicationDataOffset];
+    CopyMemory(&channel_binding_token[0], application_data, application_length);
+
+    pychan_bindings = PyCObject_FromVoidPtr(context_bindings, &destruct_channel_bindings_struct);
+
+    return Py_BuildValue("(iN)", result, pychan_bindings);
+}
+
 PyDoc_STRVAR(sspi_client_step_doc,
-"authGSSClientStep(context, challenge)\n"
+"authGSSClientStep(context, challenge, **kwargs)\n"
 "\n"
 "Executes a single Kerberos SSPI client step using the supplied server "
 "challenge.\n"
@@ -447,17 +565,23 @@ PyDoc_STRVAR(sspi_client_step_doc,
 "  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
 "  - `challenge`: A string containing the base64 encoded server challenge.\n"
 "    Ignored for the first step (pass the empty string).\n"
+"  - `input_chan_bindings`: Optional SecPkgContext_Bindings structure\n"
+"    returned by :func:`buildChannelBindingsStruct`. This is used to bind\n"
+"    the kerberos token with the TLS channel.\n"
 "\n"
 ":Returns: :data:`AUTH_GSS_CONTINUE` or :data:`AUTH_GSS_COMPLETE`");
 
 static PyObject*
-sspi_client_step(PyObject* self, PyObject* args) {
+sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
     sspi_client_state* state;
     PyObject* pyctx;
     SEC_CHAR* challenge = NULL;
     INT result = 0;
+    PyObject* pychan_bindings = NULL;
+    SecPkgContext_Bindings* sec_pkg_context_bindings = NULL;
+    static char *kwlist[] = {"state", "challenge", "input_chan_bindings", NULL};
 
-    if (!PyArg_ParseTuple(args, "Os", &pyctx, &challenge)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os|O", kwlist, &pyctx, &challenge, &pychan_bindings)) {
         return NULL;
     }
 
@@ -475,7 +599,15 @@ sspi_client_step(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    result = auth_sspi_client_step(state, challenge);
+    if (pychan_bindings != NULL) {
+        if (!PyCObject_Check(pychan_bindings)) {
+            PyErr_SetString(PyExc_TypeError, "Expected a SecPkgContext_Bindings object");
+            return NULL;
+        }
+        sec_pkg_context_bindings = (SecPkgContext_Bindings *)PyCObject_AsVoidPtr(pychan_bindings);
+    }
+
+    result = auth_sspi_client_step(state, challenge, sec_pkg_context_bindings);
     if (result == AUTH_GSS_ERROR) {
         return NULL;
     }
@@ -696,8 +828,10 @@ static PyMethodDef WinKerberosClientMethods[] = {
      METH_VARARGS | METH_KEYWORDS, sspi_client_init_doc},
     {"authGSSClientClean", sspi_client_clean,
      METH_VARARGS, sspi_client_clean_doc},
-    {"authGSSClientStep", sspi_client_step,
-     METH_VARARGS, sspi_client_step_doc},
+    {"buildChannelBindingsStruct", (PyCFunction)sspi_build_channel_bindings_struct,
+     METH_VARARGS | METH_KEYWORDS, sspi_build_channel_bindings_struct_doc},
+    {"authGSSClientStep", (PyCFunction)sspi_client_step,
+     METH_VARARGS | METH_KEYWORDS, sspi_client_step_doc},
     {"authGSSClientResponse", sspi_client_response,
      METH_VARARGS, sspi_client_response_doc},
     {"authGSSClientResponseConf", sspi_client_response_conf,
@@ -793,6 +927,9 @@ initwinkerberos(VOID)
         PyModule_AddObject(module,
                            "GSS_C_INTEG_FLAG",
                            PyInt_FromLong(ISC_REQ_INTEGRITY)) ||
+        PyModule_AddObject(module,
+                           "GSS_C_AF_UNSPEC",
+                           PyInt_FromLong(0)) ||
         PyModule_AddObject(module,
                            "GSS_MECH_OID_KRB5",
                            PyCObject_FromVoidPtr(GSS_MECH_OID_KRB5, NULL)) ||
