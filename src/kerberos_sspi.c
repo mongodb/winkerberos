@@ -249,6 +249,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
     ULONG ignored;
     SECURITY_STATUS status = AUTH_GSS_CONTINUE;
     DWORD len;
+    int secBufferCount = 0;
 
     if (state->response != NULL) {
         free(state->response);
@@ -256,31 +257,34 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
     }
 
     inbuf.ulVersion = SECBUFFER_VERSION;
-    inbuf.cBuffers = 2;
     inbuf.pBuffers = inBufs;
 
-    if (sec_pkg_context_bindings == NULL) {
-        inBufs[0].BufferType = SECBUFFER_EMPTY;
-        inBufs[0].pvBuffer = NULL;
-        inBufs[0].cbBuffer = 0;
-    } else {
-        inBufs[0].BufferType = SECBUFFER_CHANNEL_BINDINGS;
-        inBufs[0].pvBuffer = sec_pkg_context_bindings->Bindings;
-        inBufs[0].cbBuffer = sec_pkg_context_bindings->BindingsLength;
+    if (sec_pkg_context_bindings != NULL) {
+        inBufs[secBufferCount].BufferType = SECBUFFER_CHANNEL_BINDINGS;
+        inBufs[secBufferCount].pvBuffer = sec_pkg_context_bindings->Bindings;
+        inBufs[secBufferCount].cbBuffer = sec_pkg_context_bindings->BindingsLength;
+
+        secBufferCount++;
     }
 
     if (state->haveCtx) {
-        inBufs[1].BufferType = SECBUFFER_TOKEN;
-        inBufs[1].pvBuffer = base64_decode(challenge, &len);
-        if (!inBufs[1].pvBuffer) {
+        inBufs[secBufferCount].BufferType = SECBUFFER_TOKEN;
+        inBufs[secBufferCount].pvBuffer = base64_decode(challenge, &len);
+        if (!inBufs[secBufferCount].pvBuffer) {
             return AUTH_GSS_ERROR;
         }
-        inBufs[1].cbBuffer = len;
-    } else {
-        inBufs[1].BufferType = SECBUFFER_EMPTY;
-        inBufs[1].pvBuffer = NULL;
-        inBufs[1].cbBuffer = 0;
+        inBufs[secBufferCount].cbBuffer = len;
+
+        secBufferCount++;
+    } else if (!state->haveCtx && secBufferCount > 0) {
+        // Set the buffer to SECBUFFER_EMPTY if context bindings are set but we have no Context
+        inBufs[secBufferCount].BufferType = SECBUFFER_EMPTY;
+        inBufs[secBufferCount].pvBuffer = NULL;
+        inBufs[secBufferCount].cbBuffer = 0;
+
+        secBufferCount++;
     }
+    inbuf.cBuffers = secBufferCount;
 
     outbuf.ulVersion = SECBUFFER_VERSION;
     outbuf.cBuffers = 1;
@@ -302,8 +306,8 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
                                         0,
                                         /* Target data representation */
                                         SECURITY_NETWORK_DREP,
-                                        /* Challenge (Set to SECBUFFER_EMPTY on first call) */
-                                        &inbuf,
+                                        /* Challenge (Set to NULL if no buffers are set) */
+                                        inbuf.cBuffers > 0 ? &inbuf : NULL,
                                         /* Always 0 */
                                         0,
                                         /* CtxtHandle (Set on first call) */
