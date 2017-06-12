@@ -66,8 +66,10 @@ following RFC-4752, section 3.1:
 
     def get_channel_binding_struct(response):
         # This is 'tls-server-end-point:' + certificate hash of the server
+        # See docstring for channelBindings for more information on how to
+        # derive this information
         application_data = b'tls-server-end-point:D01402E0F16F30ED71B02B655AD71C7B0ADA73DE5FBD8134021A794FFA1EECE8'
-        channel_bindings = kerberos.buildChannelBindingsStruct(application_data=application_data)
+        channel_bindings = kerberos.channelBindings(application_data=application_data)
 
         return channel_bindings
 
@@ -89,7 +91,7 @@ following RFC-4752, section 3.1:
         # OPTIONAL - Get Channel Bindings Struct to bind the TLS
         # channel to Kerberos Credentials. This is known as extended
         # protection in Microsoft. If this step isn't done then
-        # no bindings are done
+        # no bindings are sent as per the normal process
         # RFC5929 - Channel Bindings for TLS
         channel_bindings = get_channel_binding_struct(response)
 
@@ -101,7 +103,7 @@ following RFC-4752, section 3.1:
 
             # When passing in the Channel Bindings Struct
             status = kerberos.authGSSClientStep(ctx, challenge,
-                    input_chan_bindings=channel_bindings)
+                    channel_bindings=channel_bindings)
 
             response = kerberos.authGSSClientResponse(ctx) or ''
             challenge = send_response_and_receive_challenge(response)
