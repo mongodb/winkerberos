@@ -465,7 +465,7 @@ PyDoc_STRVAR(sspi_channel_bindings_doc,
 "\n"
 "If using an endpoint over TLS like IIS with Extended Protection or WinRM\n"
 "with the CbtHardeningLevel set to Strict then you can use this method to\n"
-"build the channel bindings structured required for a successful\n"
+"build the channel bindings structure required for a successful\n"
 "authentication. When calling this method in this scenario you can follow\n"
 "RFC5929 - Channel Bindings for TLS where you pass in the value\n"
 "tls-server-end-point:{cert-hash} into the application_data argument.\n"
@@ -496,8 +496,8 @@ PyDoc_STRVAR(sspi_channel_bindings_doc,
 "    'tls-server-endpoint:{cert-hash}' where {cert-hash} is the hash of the\n"
 "    server's certificate.\n"
 "\n"
-":Returns: SecPkgContext_Bindings* where SecPkgContext_Bindings is the\n"
-"channel bindings structure that can be passed onto L{authGSSClientStep}.");
+":Returns: an opaque value to be passed to the channel_bindings parameter of\n"
+"    :func:`authGSSClientStep`\n");
 static PyObject*
 sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     static char *kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
@@ -551,7 +551,7 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
         channel_bindings->dwInitiatorOffset = offset;
 
         offset_p = &((unsigned char*) channel_bindings)[offset];
-        memcpy_s(&offset_p[0], initiator_length, initiator_address, initiator_length);
+        memcpy_s(&offset_p[0], data_length, initiator_address, initiator_length);
         offset = offset + initiator_length;
     } else {
         channel_bindings->dwInitiatorOffset = 0;
@@ -563,7 +563,7 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
         channel_bindings->dwAcceptorOffset = offset;
 
         offset_p = &((unsigned char*) channel_bindings)[offset];
-        memcpy_s(&offset_p[0], acceptor_length, acceptor_address, acceptor_length);
+        memcpy_s(&offset_p[0], data_length - initiator_length, acceptor_address, acceptor_length);
         offset = offset + acceptor_length;
     } else {
         channel_bindings->dwAcceptorOffset = 0;
@@ -573,7 +573,7 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     if (application_data != NULL) {
         channel_bindings->dwApplicationDataOffset = offset;
         offset_p = &((unsigned char*) channel_bindings)[offset];
-        memcpy_s(&offset_p[0], application_length, application_data, application_length);
+        memcpy_s(&offset_p[0], data_length - initiator_length - acceptor_length, application_data, application_length);
     } else {
         channel_bindings->dwApplicationDataOffset = 0;
     }
@@ -582,7 +582,6 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     if (pychan_bindings == NULL) {
         free(channel_bindings);
         free(context_bindings);
-        PyErr_SetString(PyExc_RuntimeError, "NULL result returned when creating PyCObject of a SecPkgContext_Bindings struct");
         return NULL;
     }
 
@@ -635,12 +634,11 @@ sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
 
     if (pychan_bindings != NULL) {
         if (!PyCObject_Check(pychan_bindings)) {
-            PyErr_SetString(PyExc_TypeError, "Expected a SecPkgContext_Bindings object");
+            PyErr_SetString(PyExc_TypeError, "Expected a channel bindings object");
             return NULL;
         }
         sec_pkg_context_bindings = (SecPkgContext_Bindings *)PyCObject_AsVoidPtr(pychan_bindings);
         if (sec_pkg_context_bindings == NULL) {
-            PyErr_SetString(PyExc_RuntimeError, "NULL result returned when getting a SecPkgContext_Bindings struct from a PyCObject");
             return NULL;
         }
     }

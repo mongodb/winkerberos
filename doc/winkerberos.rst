@@ -12,7 +12,7 @@
    .. autofunction:: authGSSClientUnwrap
    .. autofunction:: authGSSClientWrap
    .. autofunction:: authGSSClientClean
-   .. autofunction:: buildChannelBindingsStruct
+   .. autofunction:: channelBindings
    .. autoexception:: KrbError
    .. autoexception:: GSSError
    .. data:: AUTH_GSS_COMPLETE
