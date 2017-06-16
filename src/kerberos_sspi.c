@@ -250,6 +250,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
     SECURITY_STATUS status = AUTH_GSS_CONTINUE;
     DWORD len;
     int secBufferCount = 0;
+    int tokenBufferIndex = 0;
 
     if (state->response != NULL) {
         free(state->response);
@@ -267,6 +268,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
         secBufferCount++;
     }
 
+    tokenBufferIndex = secBufferCount;
     if (state->haveCtx) {
         inBufs[secBufferCount].BufferType = SECBUFFER_TOKEN;
         inBufs[secBufferCount].pvBuffer = base64_decode(challenge, &len);
@@ -355,8 +357,8 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
         status = AUTH_GSS_CONTINUE;
     }
 done:
-    if (inBufs[1].pvBuffer) {
-        free(inBufs[1].pvBuffer);
+    if (inBufs[tokenBufferIndex].pvBuffer) {
+        free(inBufs[tokenBufferIndex].pvBuffer);
     }
     if (outBufs[0].pvBuffer) {
         FreeContextBuffer(outBufs[0].pvBuffer);
