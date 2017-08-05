@@ -249,8 +249,8 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
     ULONG ignored;
     SECURITY_STATUS status = AUTH_GSS_CONTINUE;
     DWORD len;
-    int secBufferCount = 0;
-    int tokenBufferIndex = 0;
+    BOOL haveToken = FALSE;
+    INT tokenBufferIndex = 0;
 
     if (state->response != NULL) {
         free(state->response);
@@ -259,34 +259,26 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
 
     inbuf.ulVersion = SECBUFFER_VERSION;
     inbuf.pBuffers = inBufs;
+    inbuf.cBuffers = 0;
 
     if (sec_pkg_context_bindings != NULL) {
-        inBufs[secBufferCount].BufferType = SECBUFFER_CHANNEL_BINDINGS;
-        inBufs[secBufferCount].pvBuffer = sec_pkg_context_bindings->Bindings;
-        inBufs[secBufferCount].cbBuffer = sec_pkg_context_bindings->BindingsLength;
-
-        secBufferCount++;
+        inBufs[inbuf.cBuffers].BufferType = SECBUFFER_CHANNEL_BINDINGS;
+        inBufs[inbuf.cBuffers].pvBuffer = sec_pkg_context_bindings->Bindings;
+        inBufs[inbuf.cBuffers].cbBuffer = sec_pkg_context_bindings->BindingsLength;
+        inbuf.cBuffers++;
     }
 
-    tokenBufferIndex = secBufferCount;
+    tokenBufferIndex = inbuf.cBuffers;
     if (state->haveCtx) {
-        inBufs[secBufferCount].BufferType = SECBUFFER_TOKEN;
-        inBufs[secBufferCount].pvBuffer = base64_decode(challenge, &len);
-        if (!inBufs[secBufferCount].pvBuffer) {
+        haveToken = TRUE;
+        inBufs[tokenBufferIndex].BufferType = SECBUFFER_TOKEN;
+        inBufs[tokenBufferIndex].pvBuffer = base64_decode(challenge, &len);
+        if (!inBufs[tokenBufferIndex].pvBuffer) {
             return AUTH_GSS_ERROR;
         }
-        inBufs[secBufferCount].cbBuffer = len;
-
-        secBufferCount++;
-    } else if (!state->haveCtx && secBufferCount > 0) {
-        // Set the buffer to SECBUFFER_EMPTY if context bindings are set but we have no Context
-        inBufs[secBufferCount].BufferType = SECBUFFER_EMPTY;
-        inBufs[secBufferCount].pvBuffer = NULL;
-        inBufs[secBufferCount].cbBuffer = 0;
-
-        secBufferCount++;
+        inBufs[tokenBufferIndex].cbBuffer = len;
+        inbuf.cBuffers++;
     }
-    inbuf.cBuffers = secBufferCount;
 
     outbuf.ulVersion = SECBUFFER_VERSION;
     outbuf.cBuffers = 1;
@@ -357,7 +349,7 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgConte
         status = AUTH_GSS_CONTINUE;
     }
 done:
-    if (inBufs[tokenBufferIndex].pvBuffer) {
+    if (haveToken) {
         free(inBufs[tokenBufferIndex].pvBuffer);
     }
     if (outBufs[0].pvBuffer) {
