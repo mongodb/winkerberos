@@ -241,14 +241,16 @@ auth_sspi_client_init(WCHAR* service,
 }
 
 INT
-auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
+auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgContext_Bindings* sec_pkg_context_bindings) {
     SecBufferDesc inbuf;
-    SecBuffer inBufs[1];
+    SecBuffer inBufs[2];
     SecBufferDesc outbuf;
     SecBuffer outBufs[1];
     ULONG ignored;
     SECURITY_STATUS status = AUTH_GSS_CONTINUE;
     DWORD len;
+    BOOL haveToken = FALSE;
+    INT tokenBufferIndex = 0;
 
     if (state->response != NULL) {
         free(state->response);
@@ -256,17 +258,26 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
     }
 
     inbuf.ulVersion = SECBUFFER_VERSION;
-    inbuf.cBuffers = 1;
     inbuf.pBuffers = inBufs;
-    inBufs[0].pvBuffer = NULL;
-    inBufs[0].cbBuffer = 0;
-    inBufs[0].BufferType = SECBUFFER_TOKEN;
+    inbuf.cBuffers = 0;
+
+    if (sec_pkg_context_bindings != NULL) {
+        inBufs[inbuf.cBuffers].BufferType = SECBUFFER_CHANNEL_BINDINGS;
+        inBufs[inbuf.cBuffers].pvBuffer = sec_pkg_context_bindings->Bindings;
+        inBufs[inbuf.cBuffers].cbBuffer = sec_pkg_context_bindings->BindingsLength;
+        inbuf.cBuffers++;
+    }
+
+    tokenBufferIndex = inbuf.cBuffers;
     if (state->haveCtx) {
-        inBufs[0].pvBuffer = base64_decode(challenge, &len);
-        if (!inBufs[0].pvBuffer) {
+        haveToken = TRUE;
+        inBufs[tokenBufferIndex].BufferType = SECBUFFER_TOKEN;
+        inBufs[tokenBufferIndex].pvBuffer = base64_decode(challenge, &len);
+        if (!inBufs[tokenBufferIndex].pvBuffer) {
             return AUTH_GSS_ERROR;
         }
-        inBufs[0].cbBuffer = len;
+        inBufs[tokenBufferIndex].cbBuffer = len;
+        inbuf.cBuffers++;
     }
 
     outbuf.ulVersion = SECBUFFER_VERSION;
@@ -289,8 +300,8 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
                                         0,
                                         /* Target data representation */
                                         SECURITY_NETWORK_DREP,
-                                        /* Challenge (NULL on first call) */
-                                        state->haveCtx ? &inbuf : NULL,
+                                        /* Challenge (Set to NULL if no buffers are set) */
+                                        inbuf.cBuffers > 0 ? &inbuf : NULL,
                                         /* Always 0 */
                                         0,
                                         /* CtxtHandle (Set on first call) */
@@ -338,8 +349,8 @@ auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge) {
         status = AUTH_GSS_CONTINUE;
     }
 done:
-    if (inBufs[0].pvBuffer) {
-        free(inBufs[0].pvBuffer);
+    if (haveToken) {
+        free(inBufs[tokenBufferIndex].pvBuffer);
     }
     if (outBufs[0].pvBuffer) {
         FreeContextBuffer(outBufs[0].pvBuffer);

@@ -437,8 +437,159 @@ sspi_client_clean(PyObject* self, PyObject* args) {
     return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
 
+#if PY_MAJOR_VERSION >= 3
+void destruct_channel_bindings_struct(PyObject* o) {
+    SecPkgContext_Bindings* context_bindings = PyCapsule_GetPointer(o, NULL);
+#else
+void destruct_channel_bindings_struct(void* o) {
+    SecPkgContext_Bindings* context_bindings = (SecPkgContext_Bindings *)o;
+#endif
+    if (context_bindings != NULL) {
+        free(context_bindings->Bindings);
+        free(context_bindings);
+    }
+}
+
+PyDoc_STRVAR(sspi_channel_bindings_doc,
+"channelBindings(**kwargs)\n"
+"\n"
+"Builds a SecPkgContext_Bindings struct and returns a pointer to this struct.\n"
+"This struct can then be passed into `authGSSClientStep` under the\n"
+"channel_bindings kwarg argument. The SecPkgContext_bindings object\n"
+"destroys itself when it is reclaimed. While the parameters supported by this\n"
+"method match the structure of the GSSAPI gss_channel_bindings_t\n"
+"https://docs.oracle.com/cd/E19455-01/806-3814/overview-52/index.html\n"
+"Windows only uses the application_data parameter for now. The other\n"
+"parameters are kept for compatibility with ccs-pykerberos and future\n"
+"compatibility.\n"
+"\n"
+"If using an endpoint over TLS like IIS with Extended Protection or WinRM\n"
+"with the CbtHardeningLevel set to Strict then you can use this method to\n"
+"build the channel bindings structure required for a successful\n"
+"authentication. When calling this method in this scenario you can follow\n"
+"RFC5929 - Channel Bindings for TLS where you pass in the value\n"
+"tls-server-end-point:{cert-hash} into the application_data argument.\n"
+"There are numerous ways in which you can access the certificate hash but\n"
+"if you are using requests you can get it from a response object like so\n"
+"    if sys.version_info > (3, 0):\n"
+"        socket = response.raw._fp.fp.raw._sock\n"
+"    else:\n"
+"        socket = response.raw._fp.fp._sock\n"
+"    server_certificate = socket.getpeercert(True)\n"
+"    certificate_hash = hashlib.sha256(server_certificate)\n"
+"    certificate_digest = base64.b16decode(certificate_hash)\n"
+"    application_data = b'tls-server-endpoint:%s' % certificate_digest\n"
+"    channel_bindings = winkerberos.channelBindings(application_data=application_data)\n"
+"\n"
+"There are numerous rules around how to derive the hash from the certificate\n"
+"but in most cases it would be the SHA256 hash."
+"\n"
+":Parameters:\n"
+"  - `initiator_addrtype`: Optional int of the initiator address type,\n"
+"    default is GSS_C_AF_UNSPEC (0).\n"
+"  - `initiator_address`: Optional byte string of the initiator address.\n"
+"  - `acceptor_addrtype`: Optional int of the acceptor address type,\n"
+"    default is GSS_C_AF_UNSPEC (0).\n"
+"  - `acceptor_address`: Optional byte string of the acceptor address.\n"
+"  - `application_data`: Optional byte string that should be set under the\n"
+"    application_data field. An example of this would be\n"
+"    'tls-server-endpoint:{cert-hash}' where {cert-hash} is the hash of the\n"
+"    server's certificate.\n"
+"\n"
+":Returns: an opaque value to be passed to the channel_bindings parameter of\n"
+"    :func:`authGSSClientStep`\n");
+static PyObject*
+sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
+    static char *kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
+        "acceptor_address", "application_data", NULL};
+
+    SEC_CHANNEL_BINDINGS* channel_bindings;
+    SecPkgContext_Bindings* context_bindings;
+    PyObject *pychan_bindings = NULL;
+
+    unsigned long initiator_addrtype = 0;
+    unsigned long acceptor_addrtype = 0;
+    unsigned long initiator_length = 0;
+    unsigned long acceptor_length = 0;
+    unsigned long application_length = 0;
+    char *initiator_address = NULL;
+    char *acceptor_address = NULL;
+    char *application_data = NULL;
+
+    size_t offset = 0;
+    size_t data_length = 0;
+    unsigned char *offset_p = NULL;
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ls#ls#s#", kwlist,
+            &initiator_addrtype, &initiator_address, &initiator_length,
+            &acceptor_addrtype, &acceptor_address, &acceptor_length,
+            &application_data, &application_length)) {
+        return NULL;
+    }
+
+    data_length = initiator_length + acceptor_length + application_length;
+    offset = sizeof(SEC_CHANNEL_BINDINGS);
+
+    context_bindings = (SecPkgContext_Bindings *) malloc(sizeof(SecPkgContext_Bindings));
+    if (context_bindings == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate a memory block for SecPkgContext_Bindings");
+        return NULL;
+    }
+    context_bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + data_length;
+
+    channel_bindings = (SEC_CHANNEL_BINDINGS*) malloc(context_bindings->BindingsLength);
+    if (channel_bindings == NULL) {
+        free(context_bindings);
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate a memory block for SEC_CHANNEL_BINDINGS");
+        return NULL;
+    }
+    context_bindings->Bindings = channel_bindings;
+
+    channel_bindings->dwInitiatorAddrType = initiator_addrtype;
+    channel_bindings->cbInitiatorLength = initiator_length;
+    if (initiator_address != NULL) {
+        channel_bindings->dwInitiatorOffset = offset;
+
+        offset_p = &((unsigned char*) channel_bindings)[offset];
+        memcpy_s(&offset_p[0], data_length, initiator_address, initiator_length);
+        offset = offset + initiator_length;
+    } else {
+        channel_bindings->dwInitiatorOffset = 0;
+    }
+
+    channel_bindings->dwAcceptorAddrType = acceptor_addrtype;
+    channel_bindings->cbAcceptorLength = acceptor_length;
+    if (acceptor_address != NULL) {
+        channel_bindings->dwAcceptorOffset = offset;
+
+        offset_p = &((unsigned char*) channel_bindings)[offset];
+        memcpy_s(&offset_p[0], data_length - initiator_length, acceptor_address, acceptor_length);
+        offset = offset + acceptor_length;
+    } else {
+        channel_bindings->dwAcceptorOffset = 0;
+    }
+
+    channel_bindings->cbApplicationDataLength = application_length;
+    if (application_data != NULL) {
+        channel_bindings->dwApplicationDataOffset = offset;
+        offset_p = &((unsigned char*) channel_bindings)[offset];
+        memcpy_s(&offset_p[0], data_length - initiator_length - acceptor_length, application_data, application_length);
+    } else {
+        channel_bindings->dwApplicationDataOffset = 0;
+    }
+
+    pychan_bindings = PyCObject_FromVoidPtr(context_bindings, &destruct_channel_bindings_struct);
+    if (pychan_bindings == NULL) {
+        free(channel_bindings);
+        free(context_bindings);
+        return NULL;
+    }
+
+    return Py_BuildValue("N", pychan_bindings);
+}
+
 PyDoc_STRVAR(sspi_client_step_doc,
-"authGSSClientStep(context, challenge)\n"
+"authGSSClientStep(context, challenge, **kwargs)\n"
 "\n"
 "Executes a single Kerberos SSPI client step using the supplied server "
 "challenge.\n"
@@ -447,17 +598,23 @@ PyDoc_STRVAR(sspi_client_step_doc,
 "  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
 "  - `challenge`: A string containing the base64 encoded server challenge.\n"
 "    Ignored for the first step (pass the empty string).\n"
+"  - `channel_bindings`: Optional SecPkgContext_Bindings structure\n"
+"    returned by :func:`channelBindings`. This is used to bind\n"
+"    the kerberos token with the TLS channel.\n"
 "\n"
 ":Returns: :data:`AUTH_GSS_CONTINUE` or :data:`AUTH_GSS_COMPLETE`");
 
 static PyObject*
-sspi_client_step(PyObject* self, PyObject* args) {
+sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
     sspi_client_state* state;
     PyObject* pyctx;
     SEC_CHAR* challenge = NULL;
     INT result = 0;
+    PyObject* pychan_bindings = NULL;
+    SecPkgContext_Bindings* sec_pkg_context_bindings = NULL;
+    static char *kwlist[] = {"state", "challenge", "channel_bindings", NULL};
 
-    if (!PyArg_ParseTuple(args, "Os", &pyctx, &challenge)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os|O", kwlist, &pyctx, &challenge, &pychan_bindings)) {
         return NULL;
     }
 
@@ -475,7 +632,18 @@ sspi_client_step(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    result = auth_sspi_client_step(state, challenge);
+    if (pychan_bindings != NULL) {
+        if (!PyCObject_Check(pychan_bindings)) {
+            PyErr_SetString(PyExc_TypeError, "Expected a channel bindings object");
+            return NULL;
+        }
+        sec_pkg_context_bindings = (SecPkgContext_Bindings *)PyCObject_AsVoidPtr(pychan_bindings);
+        if (sec_pkg_context_bindings == NULL) {
+            return NULL;
+        }
+    }
+
+    result = auth_sspi_client_step(state, challenge, sec_pkg_context_bindings);
     if (result == AUTH_GSS_ERROR) {
         return NULL;
     }
@@ -696,8 +864,10 @@ static PyMethodDef WinKerberosClientMethods[] = {
      METH_VARARGS | METH_KEYWORDS, sspi_client_init_doc},
     {"authGSSClientClean", sspi_client_clean,
      METH_VARARGS, sspi_client_clean_doc},
-    {"authGSSClientStep", sspi_client_step,
-     METH_VARARGS, sspi_client_step_doc},
+    {"channelBindings", (PyCFunction)sspi_channel_bindings,
+     METH_VARARGS | METH_KEYWORDS, sspi_channel_bindings_doc},
+    {"authGSSClientStep", (PyCFunction)sspi_client_step,
+     METH_VARARGS | METH_KEYWORDS, sspi_client_step_doc},
     {"authGSSClientResponse", sspi_client_response,
      METH_VARARGS, sspi_client_response_doc},
     {"authGSSClientResponseConf", sspi_client_response_conf,
@@ -794,6 +964,9 @@ initwinkerberos(VOID)
                            "GSS_C_INTEG_FLAG",
                            PyInt_FromLong(ISC_REQ_INTEGRITY)) ||
         PyModule_AddObject(module,
+                           "GSS_C_AF_UNSPEC",
+                           PyInt_FromLong(0)) ||
+        PyModule_AddObject(module,
                            "GSS_MECH_OID_KRB5",
                            PyCObject_FromVoidPtr(GSS_MECH_OID_KRB5, NULL)) ||
         PyModule_AddObject(module,
@@ -801,7 +974,7 @@ initwinkerberos(VOID)
                            PyCObject_FromVoidPtr(GSS_MECH_OID_SPNEGO, NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
-                           PyString_FromString("0.6.0"))) {
+                           PyString_FromString("0.7.0"))) {
         Py_DECREF(GSSError);
         Py_DECREF(KrbError);
         Py_DECREF(module);
