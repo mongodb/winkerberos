@@ -500,27 +500,27 @@ PyDoc_STRVAR(sspi_channel_bindings_doc,
 "    :func:`authGSSClientStep`\n");
 static PyObject*
 sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
-    static char *kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
+    static char* kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
         "acceptor_address", "application_data", NULL};
 
     SEC_CHANNEL_BINDINGS* channel_bindings;
     SecPkgContext_Bindings* context_bindings;
-    PyObject *pychan_bindings = NULL;
+    PyObject* pychan_bindings = NULL;
 
     unsigned long initiator_addrtype = 0;
     unsigned long acceptor_addrtype = 0;
     unsigned long initiator_length = 0;
     unsigned long acceptor_length = 0;
     unsigned long application_length = 0;
-    char *initiator_address = NULL;
-    char *acceptor_address = NULL;
-    char *application_data = NULL;
+    char* initiator_address = NULL;
+    char* acceptor_address = NULL;
+    char* application_data = NULL;
 
-    size_t offset = 0;
-    size_t data_length = 0;
-    unsigned char *offset_p = NULL;
+    unsigned long offset = 0;
+    unsigned long data_length = 0;
+    unsigned char* offset_p = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ls#ls#s#", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ks#ks#s#", kwlist,
             &initiator_addrtype, &initiator_address, &initiator_length,
             &acceptor_addrtype, &acceptor_address, &acceptor_length,
             &application_data, &application_length)) {
@@ -528,16 +528,16 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     }
 
     data_length = initiator_length + acceptor_length + application_length;
-    offset = sizeof(SEC_CHANNEL_BINDINGS);
+    offset = (unsigned long)sizeof(SEC_CHANNEL_BINDINGS);
 
-    context_bindings = (SecPkgContext_Bindings *) malloc(sizeof(SecPkgContext_Bindings));
+    context_bindings = (SecPkgContext_Bindings *)malloc(sizeof(SecPkgContext_Bindings));
     if (context_bindings == NULL) {
         PyErr_SetString(PyExc_MemoryError, "Failed to allocate a memory block for SecPkgContext_Bindings");
         return NULL;
     }
-    context_bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + data_length;
+    context_bindings->BindingsLength = (unsigned long)sizeof(SEC_CHANNEL_BINDINGS) + data_length;
 
-    channel_bindings = (SEC_CHANNEL_BINDINGS*) malloc(context_bindings->BindingsLength);
+    channel_bindings = (SEC_CHANNEL_BINDINGS*)malloc(context_bindings->BindingsLength);
     if (channel_bindings == NULL) {
         free(context_bindings);
         PyErr_SetString(PyExc_MemoryError, "Failed to allocate a memory block for SEC_CHANNEL_BINDINGS");
@@ -550,7 +550,7 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     if (initiator_address != NULL) {
         channel_bindings->dwInitiatorOffset = offset;
 
-        offset_p = &((unsigned char*) channel_bindings)[offset];
+        offset_p = &((unsigned char*)channel_bindings)[offset];
         memcpy_s(&offset_p[0], data_length, initiator_address, initiator_length);
         offset = offset + initiator_length;
     } else {
@@ -562,8 +562,11 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     if (acceptor_address != NULL) {
         channel_bindings->dwAcceptorOffset = offset;
 
-        offset_p = &((unsigned char*) channel_bindings)[offset];
-        memcpy_s(&offset_p[0], data_length - initiator_length, acceptor_address, acceptor_length);
+        offset_p = &((unsigned char*)channel_bindings)[offset];
+        memcpy_s(&offset_p[0],
+                 data_length - initiator_length,
+                 acceptor_address,
+                 acceptor_length);
         offset = offset + acceptor_length;
     } else {
         channel_bindings->dwAcceptorOffset = 0;
@@ -573,7 +576,10 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     if (application_data != NULL) {
         channel_bindings->dwApplicationDataOffset = offset;
         offset_p = &((unsigned char*) channel_bindings)[offset];
-        memcpy_s(&offset_p[0], data_length - initiator_length - acceptor_length, application_data, application_length);
+        memcpy_s(&offset_p[0],
+                 data_length - initiator_length - acceptor_length,
+                 application_data,
+                 application_length);
     } else {
         channel_bindings->dwApplicationDataOffset = 0;
     }
