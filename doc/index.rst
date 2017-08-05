@@ -29,15 +29,13 @@ Building and installing from source
 You must have the correct version of VC++ installed for your version of
 Python:
 
-- Python 2.6 - Visual Studio 2008 (Professional for 64bit)
-- Python 2.7 - Visual Studio 2008 (Professional for 64bit)
+- Python 2.6 - `Microsoft Visual C++ Compiler for Python 2.7`_
+- Python 2.7 - `Microsoft Visual C++ Compiler for Python 2.7`_
 - Python 3.3 - Visual Studio 2010 (Professional for 64bit)
 - Python 3.4 - Visual Studio 2010 (Professional for 64bit)
 - Python 3.5+ - Visual Studio 2015 (Any version)
 
-The `Microsoft Visual C++ Compiler for Python 2.7
-<https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_ could also
-be used to build for Python 2.6 and 2.7.
+.. _`Microsoft Visual C++ Compiler for Python 2.7`: https://www.microsoft.com/en-us/download/details.aspx?id=44266
 
 Once you have the required compiler installed, just run the following command::
 
