@@ -7,7 +7,7 @@ Changes in Version 0.7.0
 - Added optional support for passing in Channel Binding Tokens (RFC 5929) into
   :func:`winkerberos.authGSSClientStep`. The binding token structure can be
   built using :func:`winkerberos.channelBindings` (see the example
-  for more details).
+  for more details). Thanks go to Jordan Borean for the patch.
 
 Changes in Version 0.6.0
 ------------------------
