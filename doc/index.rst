@@ -3,10 +3,11 @@ WinKerberos |release|
 
 About
 -----
-**WinKerberos** is a native Kerberos SSPI client implementation. It mimics the
-client API of `pykerberos <https://pypi.python.org/pypi/pykerberos>`_ to
-implement Kerberos SSPI authentication on Microsoft Windows. The source is
-`available on github <https://github.com/mongodb-labs/winkerberos>`_.
+**WinKerberos** is a native Kerberos client implementation for Python on
+Windows. It mimics the client API of `pykerberos
+<https://pypi.python.org/pypi/pykerberos>`_ to implement Kerberos
+authentication with Microsoft's Security Support Provider Interface (SSPI). The
+source is `available on github <https://github.com/mongodb-labs/winkerberos>`_.
 
 Documentation
 -------------
