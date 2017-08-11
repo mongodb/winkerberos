@@ -24,6 +24,8 @@ WinKerberos is in the `Python Package Index (pypi)
 
   python -m pip install winkerberos
 
+WinKerberos requires Windows 7 / Windows Server 2008 R2 or newer.
+
 Building and installing from source
 -----------------------------------
 
