@@ -43,6 +43,30 @@ destroy_sspi_client_state(sspi_client_state* state) {
 }
 
 VOID
+destroy_sspi_server_state(sspi_server_state* state) {
+	if (state->haveCtx) {
+		DeleteSecurityContext(&state->ctx);
+		state->haveCtx = 0;
+	}
+	if (state->haveCred) {
+		FreeCredentialsHandle(&state->cred);
+		state->haveCred = 0;
+	}
+	if (state->spn != NULL) {
+		free(state->spn);
+		state->spn = NULL;
+	}
+	if (state->response != NULL) {
+		free(state->response);
+		state->response = NULL;
+	}
+	if (state->username != NULL) {
+		free(state->username);
+		state->username = NULL;
+	}
+}
+
+VOID
 set_gsserror(DWORD errCode, const SEC_CHAR* msg) {
     SEC_CHAR* err;
     DWORD status;
@@ -241,6 +265,81 @@ auth_sspi_client_init(WCHAR* service,
 }
 
 INT
+auth_sspi_server_init(WCHAR* service,
+	ULONG flags,
+	WCHAR* user,
+	ULONG ulen,
+	WCHAR* domain,
+	ULONG dlen,
+	WCHAR* password,
+	ULONG plen,
+	WCHAR* mechoid,
+	sspi_server_state* state) {
+	SECURITY_STATUS status;
+	SEC_WINNT_AUTH_IDENTITY_W authIdentity;
+	TimeStamp ignored;
+
+	state->response = NULL;
+	state->username = NULL;
+	state->qop = SECQOP_WRAP_NO_ENCRYPT;
+	state->flags = flags;
+	state->haveCred = 0;
+	state->haveCtx = 0;
+	state->spn = _wcsdup(service);
+	state->mechoid = _wcsdup(mechoid);
+	if (state->spn == NULL) {
+		PyErr_SetNone(PyExc_MemoryError);
+		return AUTH_GSS_ERROR;
+	}
+	/* Convert RFC-2078 format to SPN */
+	if (!wcschr(state->spn, L'/')) {
+		WCHAR* ptr = wcschr(state->spn, L'@');
+		if (ptr) {
+			*ptr = L'/';
+		}
+	}
+
+	if (user) {
+		authIdentity.User = user;
+		authIdentity.UserLength = ulen;
+		authIdentity.Domain = domain;
+		authIdentity.DomainLength = dlen;
+		authIdentity.Password = password;
+		authIdentity.PasswordLength = plen;
+		authIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+	}
+
+	/* Note that the first paramater, pszPrincipal, appears to be
+	* completely ignored in the Kerberos SSP. For more details see
+	* https://github.com/mongodb-labs/winkerberos/issues/11.
+	* */
+	status = AcquireCredentialsHandleW(/* Principal */
+		NULL,
+		/* Security package name */
+		mechoid,
+		/* Credentials Use */
+		SECPKG_CRED_INBOUND,
+		/* LogonID (We don't use this) */
+		NULL,
+		/* AuthData */
+		user ? &authIdentity : NULL,
+		/* Always NULL */
+		NULL,
+		/* Always NULL */
+		NULL,
+		/* CredHandle */
+		&state->cred,
+		/* Expiry (Required but unused by us) */
+		&ignored);
+	if (status != SEC_E_OK) {
+		set_gsserror(status, "AcquireCredentialsHandle");
+		return AUTH_GSS_ERROR;
+	}
+	state->haveCred = 1;
+	return AUTH_GSS_COMPLETE;
+}
+
+INT
 auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgContext_Bindings* sec_pkg_context_bindings) {
     SecBufferDesc inbuf;
     SecBuffer inBufs[2];
@@ -356,6 +455,126 @@ done:
         FreeContextBuffer(outBufs[0].pvBuffer);
     }
     return status;
+}
+
+INT
+auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge, SecPkgContext_Bindings* sec_pkg_context_bindings) {
+	SecBufferDesc inbuf;
+	SecBuffer inBufs[2];
+	SecBufferDesc outbuf;
+	SecBuffer outBufs[1];
+	ULONG ignored;
+	SECURITY_STATUS status = AUTH_GSS_CONTINUE;
+	DWORD len;
+	BOOL haveToken = FALSE;
+	INT tokenBufferIndex = 0;
+
+	if (state->response != NULL) {
+		free(state->response);
+		state->response = NULL;
+	}
+
+	inbuf.ulVersion = SECBUFFER_VERSION;
+	inbuf.pBuffers = inBufs;
+	inbuf.cBuffers = 0;
+
+	if (sec_pkg_context_bindings != NULL) {
+		inBufs[inbuf.cBuffers].BufferType = SECBUFFER_CHANNEL_BINDINGS;
+		inBufs[inbuf.cBuffers].pvBuffer = sec_pkg_context_bindings->Bindings;
+		inBufs[inbuf.cBuffers].cbBuffer = sec_pkg_context_bindings->BindingsLength;
+		inbuf.cBuffers++;
+	}
+
+	tokenBufferIndex = inbuf.cBuffers;
+	haveToken = TRUE;
+	inBufs[tokenBufferIndex].BufferType = SECBUFFER_TOKEN;
+	inBufs[tokenBufferIndex].pvBuffer = base64_decode(challenge, &len);
+	if (!inBufs[tokenBufferIndex].pvBuffer) {
+		return AUTH_GSS_ERROR;
+	}
+	inBufs[tokenBufferIndex].cbBuffer = len;
+	inbuf.cBuffers++;
+
+	/* Get cbMaxToken size for the output buffer */
+	PSecPkgInfo pkgInfo;
+	status = QuerySecurityPackageInfo(wide_to_utf8(state->mechoid), &pkgInfo);
+	if (status != SEC_E_OK) {
+		set_gsserror(status, "QuerySecurityPackageInfo");
+		status = AUTH_GSS_ERROR;
+		goto done;
+	}
+
+	outbuf.ulVersion = SECBUFFER_VERSION;
+	outbuf.cBuffers = 1;
+	outbuf.pBuffers = outBufs;
+	outBufs[0].pvBuffer = NULL;
+	outBufs[0].cbBuffer = pkgInfo->cbMaxToken;
+	outBufs[0].BufferType = SECBUFFER_TOKEN;
+
+	Py_BEGIN_ALLOW_THREADS
+		status = AcceptSecurityContext(/* CredHandle */
+			&state->cred,
+			/* CtxtHandle (NULL on first call) */
+			state->haveCtx ? &state->ctx : NULL,
+			/* Buff */
+			&inbuf,
+			/* Flags */
+			ASC_REQ_INTEGRITY | ASC_REQ_SEQUENCE_DETECT | ASC_REQ_REPLAY_DETECT | ASC_REQ_CONFIDENTIALITY | state->flags,
+			/* Target data representation */
+			SECURITY_NETWORK_DREP,
+			/* CtxtHandle (Set on first call) */
+			&state->ctx,
+			/* Output */
+			&outbuf,
+			/* Context attributes */
+			&ignored,
+			/* Expiry (We don't use this) */
+			NULL);
+	Py_END_ALLOW_THREADS
+		if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED) {
+			set_gsserror(status, "AcceptSecurityContext");
+			status = AUTH_GSS_ERROR;
+			goto done;
+		}
+	state->haveCtx = 1;
+	if (outBufs[0].cbBuffer) {
+		state->response = base64_encode(outBufs[0].pvBuffer,
+			outBufs[0].cbBuffer);
+		if (!state->response) {
+			status = AUTH_GSS_ERROR;
+			goto done;
+		}
+	}
+	if (status == SEC_E_OK) {
+		/* Get authenticated username. */
+		SecPkgContext_NamesW names;
+		status = QueryContextAttributesW(
+			&state->ctx, SECPKG_ATTR_NAMES, &names);
+		if (status != SEC_E_OK) {
+			set_gsserror(status, "QueryContextAttributesW");
+			status = AUTH_GSS_ERROR;
+			goto done;
+		}
+		state->username = wide_to_utf8(names.sUserName);
+		if (state->username == NULL) {
+			FreeContextBuffer(names.sUserName);
+			status = AUTH_GSS_ERROR;
+			goto done;
+		}
+		FreeContextBuffer(names.sUserName);
+		status = AUTH_GSS_COMPLETE;
+	}
+	else {
+		status = AUTH_GSS_CONTINUE;
+	}
+done:
+	if (haveToken) {
+		free(inBufs[tokenBufferIndex].pvBuffer);
+	}
+	if (outBufs[0].pvBuffer) {
+		FreeContextBuffer(outBufs[0].pvBuffer);
+	}
+	return status;
 }
 
 INT
