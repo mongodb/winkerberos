@@ -20,6 +20,13 @@
 #include <Windows.h>
 #include <sspi.h>
 
+#ifdef __MINGW32__
+typedef struct _SecPkgContext_Bindings {
+  unsigned long        BindingsLength;
+  SEC_CHANNEL_BINDINGS *Bindings;
+} SecPkgContext_Bindings, *PSecPkgContext_Bindings;
+#endif
+
 #define AUTH_GSS_ERROR -1
 #define AUTH_GSS_COMPLETE 1
 #define AUTH_GSS_CONTINUE 0
