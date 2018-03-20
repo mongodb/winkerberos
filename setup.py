@@ -81,7 +81,7 @@ if sys.version_info[:2] == (2, 6):
     test_suite = "unittest2.collector"
 else:
     test_suite = "test"
-    
+
 chost = os.environ.get("MINGW_CHOST") #ie: i686-w64-mingw32
 if chost:
     #mingw build
