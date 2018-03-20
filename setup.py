@@ -81,7 +81,21 @@ if sys.version_info[:2] == (2, 6):
     test_suite = "unittest2.collector"
 else:
     test_suite = "test"
-
+    
+chost = os.environ.get("MINGW_CHOST") #ie: i686-w64-mingw32
+if chost:
+    #mingw build
+    libpath = os.environ.get("MINGW_PREFIX", "/mingw32")+"/"+chost+"/lib"
+    extra_link_args = ["-lssl", "-lcrypto", "-fPIC",
+        "%s/libcrypt32.a" % libpath,
+        "%s/libsecur32.a" % libpath,
+        "%s/libshlwapi.a" % libpath,
+        ]
+else:
+    #msvc:
+    extra_link_args = ['crypt32.lib', 'secur32.lib', 'Shlwapi.lib',
+           '/NXCOMPAT', '/DYNAMICBASE',
+           ]
 setup(
     name="winkerberos",
     version="0.7.0",
@@ -114,11 +128,7 @@ setup(
     ext_modules = [
         Extension(
             "winkerberos",
-            extra_link_args=['crypt32.lib',
-                             'secur32.lib',
-                             'Shlwapi.lib',
-                             '/NXCOMPAT',
-                             '/DYNAMICBASE'],
+            extra_link_args=extra_link_args,
             sources = [
                 "src/winkerberos.c",
                 "src/kerberos_sspi.c"
