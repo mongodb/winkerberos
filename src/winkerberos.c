@@ -438,103 +438,26 @@ sspi_server_init(PyObject* self, PyObject* args, PyObject* kw) {
 	sspi_server_state* state;
 	PyObject* pyctx = NULL;
 	PyObject* serviceobj;
-	PyObject* principalobj = Py_None;
-	LONG flags = ISC_REQ_MUTUAL_AUTH | ISC_REQ_SEQUENCE_DETECT;
-	PyObject* userobj = Py_None;
-	PyObject* domainobj = Py_None;
-	PyObject* passwordobj = Py_None;
 	PyObject* mechoidobj = Py_None;
 	WCHAR *service = NULL, *principal = NULL;
-	WCHAR *user = NULL, *domain = NULL, *password = NULL;
-	Py_ssize_t slen, len, ulen, dlen, plen = 0;
+	Py_ssize_t slen = 0;
 	WCHAR *mechoid = GSS_MECH_OID_KRB5;
 	PyObject* resultobj = NULL;
 	INT result = 0;
 	static SEC_CHAR* keywords[] = {
-		"service", "principal", "gssflags", "user", "domain", "password", "mech_oid", NULL };
+		"service", "mech_oid", NULL };
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 		kw,
-		"O|OlOOOO",
+		"O|O",
 		keywords,
 		&serviceobj,
-		&principalobj,
-		&flags,
-		&userobj,
-		&domainobj,
-		&passwordobj,
 		&mechoidobj)) {
 		return NULL;
 	}
-	if (flags < 0) {
-		PyErr_SetString(PyExc_ValueError, "gss_flags must be >= 0");
-		return NULL;
-	}
 
-	if (!StringObject_AsWCHAR(serviceobj, 1, FALSE, &service, &slen) ||
-		!BufferObject_AsWCHAR(principalobj, &principal, &len) ||
-		!StringObject_AsWCHAR(userobj, 4, TRUE, &user, &ulen) ||
-		!StringObject_AsWCHAR(domainobj, 5, TRUE, &domain, &dlen) ||
-		!BufferObject_AsWCHAR(passwordobj, &password, &plen) ||
-		_string_too_long("user", (SIZE_T)ulen) ||
-		_string_too_long("domain", (SIZE_T)dlen) ||
-		_string_too_long("password", (SIZE_T)plen)) {
+	if (!StringObject_AsWCHAR(serviceobj, 1, FALSE, &service, &slen)) {
 		goto done;
-	}
-
-	/* Prefer (user, domain, password) for backward compatibility. */
-	if (!user && principal) {
-		HRESULT res;
-		/* Use (user, domain, password) or principal, not a mix of both. */
-		free(domain);
-		domain = NULL;
-		if (password) {
-			SecureZeroMemory(password, sizeof(WCHAR) * plen);
-			free(password);
-			password = NULL;
-		}
-		/* Support password as part of the principal parameter. */
-		if (wcschr(principal, L':')) {
-			WCHAR* current;
-			WCHAR* next;
-			current = wcstok_s(principal, L":", &next);
-			if (!current) {
-				goto memoryerror;
-			}
-			user = _wcsdup(current);
-			if (!user) {
-				goto memoryerror;
-			}
-			current = wcstok_s(NULL, L":", &next);
-			if (!current) {
-				goto memoryerror;
-			}
-			password = _wcsdup(current);
-			if (!password) {
-				goto memoryerror;
-			}
-		}
-		else {
-			user = _wcsdup(principal);
-			if (!user) {
-				goto memoryerror;
-			}
-		}
-		/* Support user principal or password including the : character. */
-		res = UrlUnescapeW(user, NULL, NULL, URL_UNESCAPE_INPLACE);
-		if (res != S_OK) {
-			set_gsserror(res, "UrlUnescapeW");
-			goto done;
-		}
-		if (password) {
-			res = UrlUnescapeW(password, NULL, NULL, URL_UNESCAPE_INPLACE);
-			if (res != S_OK) {
-				set_gsserror(res, "UrlUnescapeW");
-				goto done;
-			}
-			plen = wcslen(password);
-		}
-		ulen = wcslen(user);
 	}
 
 	if (mechoidobj != Py_None) {
@@ -561,8 +484,7 @@ sspi_server_init(PyObject* self, PyObject* args, PyObject* kw) {
 	}
 
 	result = auth_sspi_server_init(
-		service, (ULONG)flags,
-		user, (ULONG)ulen, domain, (ULONG)dlen, password, (ULONG)plen, mechoid, state);
+		service, mechoid, state);
 	if (result == AUTH_GSS_ERROR) {
 		Py_DECREF(pyctx);
 		goto done;
@@ -576,17 +498,6 @@ memoryerror:
 
 done:
 	free(service);
-	/* The principal parameter can include a password. */
-	if (principal) {
-		SecureZeroMemory(principal, sizeof(WCHAR) * len);
-		free(principal);
-	}
-	free(user);
-	free(domain);
-	if (password) {
-		SecureZeroMemory(password, sizeof(WCHAR) * plen);
-		free(password);
-	}
 	return resultobj;
 }
 

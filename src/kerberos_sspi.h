@@ -73,13 +73,6 @@ INT auth_sspi_client_init(WCHAR* service,
                           WCHAR* mechoid,
                           sspi_client_state* state);
 INT auth_sspi_server_init(WCHAR* service,
-	ULONG flags,
-	WCHAR* user,
-	ULONG ulen,
-	WCHAR* domain,
-	ULONG dlen,
-	WCHAR* password,
-	ULONG plen,
 	WCHAR* mechoid,
 	sspi_server_state* state);
 
