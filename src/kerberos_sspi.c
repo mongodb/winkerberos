@@ -266,23 +266,13 @@ auth_sspi_client_init(WCHAR* service,
 
 INT
 auth_sspi_server_init(WCHAR* service,
-	ULONG flags,
-	WCHAR* user,
-	ULONG ulen,
-	WCHAR* domain,
-	ULONG dlen,
-	WCHAR* password,
-	ULONG plen,
 	WCHAR* mechoid,
 	sspi_server_state* state) {
 	SECURITY_STATUS status;
-	SEC_WINNT_AUTH_IDENTITY_W authIdentity;
 	TimeStamp ignored;
 
 	state->response = NULL;
-	state->username = NULL;
 	state->qop = SECQOP_WRAP_NO_ENCRYPT;
-	state->flags = flags;
 	state->haveCred = 0;
 	state->haveCtx = 0;
 	state->spn = _wcsdup(service);
@@ -299,16 +289,6 @@ auth_sspi_server_init(WCHAR* service,
 		}
 	}
 
-	if (user) {
-		authIdentity.User = user;
-		authIdentity.UserLength = ulen;
-		authIdentity.Domain = domain;
-		authIdentity.DomainLength = dlen;
-		authIdentity.Password = password;
-		authIdentity.PasswordLength = plen;
-		authIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	}
-
 	/* Note that the first paramater, pszPrincipal, appears to be
 	* completely ignored in the Kerberos SSP. For more details see
 	* https://github.com/mongodb-labs/winkerberos/issues/11.
@@ -322,7 +302,7 @@ auth_sspi_server_init(WCHAR* service,
 		/* LogonID (We don't use this) */
 		NULL,
 		/* AuthData */
-		user ? &authIdentity : NULL,
+		NULL,
 		/* Always NULL */
 		NULL,
 		/* Always NULL */
@@ -519,7 +499,7 @@ auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge, SecPkgConte
 			/* Buff */
 			&inbuf,
 			/* Flags */
-			ASC_REQ_INTEGRITY | ASC_REQ_SEQUENCE_DETECT | ASC_REQ_REPLAY_DETECT | ASC_REQ_CONFIDENTIALITY | state->flags,
+			NULL,
 			/* Target data representation */
 			SECURITY_NETWORK_DREP,
 			/* CtxtHandle (Set on first call) */
