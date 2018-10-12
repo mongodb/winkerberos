@@ -439,7 +439,7 @@ sspi_server_init(PyObject* self, PyObject* args, PyObject* kw) {
 	PyObject* pyctx = NULL;
 	PyObject* serviceobj;
 	PyObject* mechoidobj = Py_None;
-	WCHAR *service = NULL, *principal = NULL;
+	WCHAR *service = NULL;
 	Py_ssize_t slen = 0;
 	WCHAR *mechoid = GSS_MECH_OID_KRB5;
 	PyObject* resultobj = NULL;
