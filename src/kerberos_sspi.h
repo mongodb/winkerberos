@@ -77,7 +77,7 @@ INT auth_sspi_server_init(WCHAR* service,
 	sspi_server_state* state);
 
 INT auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgContext_Bindings* sec_pkg_context_bindings);
-INT auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge, SecPkgContext_Bindings* sec_pkg_context_bindings);
+INT auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge);
 INT auth_sspi_client_unwrap(sspi_client_state* state, SEC_CHAR* challenge);
 INT auth_sspi_client_wrap(sspi_client_state* state,
                           SEC_CHAR* data,

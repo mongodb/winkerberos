@@ -438,7 +438,7 @@ done:
 }
 
 INT
-auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge, SecPkgContext_Bindings* sec_pkg_context_bindings) {
+auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge) {
 	SecBufferDesc inbuf;
 	SecBuffer inBufs[2];
 	SecBufferDesc outbuf;
@@ -457,13 +457,6 @@ auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge, SecPkgConte
 	inbuf.ulVersion = SECBUFFER_VERSION;
 	inbuf.pBuffers = inBufs;
 	inbuf.cBuffers = 0;
-
-	if (sec_pkg_context_bindings != NULL) {
-		inBufs[inbuf.cBuffers].BufferType = SECBUFFER_CHANNEL_BINDINGS;
-		inBufs[inbuf.cBuffers].pvBuffer = sec_pkg_context_bindings->Bindings;
-		inBufs[inbuf.cBuffers].cbBuffer = sec_pkg_context_bindings->BindingsLength;
-		inbuf.cBuffers++;
-	}
 
 	tokenBufferIndex = inbuf.cBuffers;
 	haveToken = TRUE;

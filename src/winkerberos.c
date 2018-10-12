@@ -761,11 +761,9 @@ sspi_server_step(PyObject* self, PyObject* args, PyObject* keywds) {
 	PyObject* pyctx;
 	SEC_CHAR* challenge = NULL;
 	INT result = 0;
-	PyObject* pychan_bindings = NULL;
-	SecPkgContext_Bindings* sec_pkg_context_bindings = NULL;
-	static char *kwlist[] = { "state", "challenge", "channel_bindings", NULL };
+	static char *kwlist[] = { "state", "challenge", NULL };
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os|O", kwlist, &pyctx, &challenge, &pychan_bindings)) {
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os", kwlist, &pyctx, &challenge)) {
 		return NULL;
 	}
 
@@ -783,18 +781,7 @@ sspi_server_step(PyObject* self, PyObject* args, PyObject* keywds) {
 		return NULL;
 	}
 
-	if (pychan_bindings != NULL) {
-		if (!PyCObject_Check(pychan_bindings)) {
-			PyErr_SetString(PyExc_TypeError, "Expected a channel bindings object");
-			return NULL;
-		}
-		sec_pkg_context_bindings = (SecPkgContext_Bindings *)PyCObject_AsVoidPtr(pychan_bindings);
-		if (sec_pkg_context_bindings == NULL) {
-			return NULL;
-		}
-	}
-
-	result = auth_sspi_server_step(state, challenge, sec_pkg_context_bindings);
+	result = auth_sspi_server_step(state, challenge);
 	if (result == AUTH_GSS_ERROR) {
 		return NULL;
 	}
