@@ -1,4 +1,4 @@
-# This Repository is NOT a supported MongoDB product
+This Repository is NOT a supported MongoDB product
 
 
 ===========
