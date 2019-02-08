@@ -159,7 +159,7 @@ class TestWinKerberos(unittest.TestCase):
            payload=custom)
         self.assertTrue(response['done'])
 
-        self.assertIsInstance(kerberos.authGSSClientUsername(ctx), str)
+        self.assertIsInstance(kerberos.authGSSClientUserName(ctx), str)
 
     def test_uninitialized_context(self):
         res, ctx = kerberos.authGSSClientInit(
@@ -172,7 +172,7 @@ class TestWinKerberos(unittest.TestCase):
         self.assertEqual(res, kerberos.AUTH_GSS_COMPLETE)
 
         self.assertIsNone(kerberos.authGSSClientResponse(ctx))
-        self.assertIsNone(kerberos.authGSSClientUsername(ctx))
+        self.assertIsNone(kerberos.authGSSClientUserName(ctx))
         self.assertRaises(
             kerberos.GSSError, kerberos.authGSSClientUnwrap, ctx, "foobar")
         self.assertRaises(

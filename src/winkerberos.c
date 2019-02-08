@@ -858,7 +858,7 @@ sspi_client_response_conf(PyObject* self, PyObject* args) {
 }
 
 PyDoc_STRVAR(sspi_client_username_doc,
-"authGSSClientUsername(context)\n"
+"authGSSClientUserName(context)\n"
 "\n"
 "Get the user name of the authenticated principal. Will only succeed after\n"
 "authentication is complete.\n"
@@ -1040,9 +1040,9 @@ static PyMethodDef WinKerberosClientMethods[] = {
      METH_VARARGS },
     {"authGSSClientResponseConf", sspi_client_response_conf,
      METH_VARARGS, sspi_client_response_conf_doc},
-    {"authGSSClientUsername", sspi_client_username,
+    {"authGSSClientUserName", sspi_client_username,
      METH_VARARGS, sspi_client_username_doc},
-    { "authGSSServerUsername", sspi_server_username,
+    { "authGSSServerUserName", sspi_server_username,
      METH_VARARGS },
     {"authGSSClientUnwrap", sspi_client_unwrap,
      METH_VARARGS, sspi_client_unwrap_doc},
