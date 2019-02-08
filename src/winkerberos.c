@@ -990,7 +990,7 @@ initwinkerberos(VOID)
                            PyCObject_FromVoidPtr(GSS_MECH_OID_SPNEGO, NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
-                           PyString_FromString("0.7.0"))) {
+                           PyString_FromString("0.8.0.dev0"))) {
         Py_DECREF(GSSError);
         Py_DECREF(KrbError);
         Py_DECREF(module);
