@@ -265,9 +265,7 @@ auth_sspi_client_init(WCHAR* service,
 }
 
 INT
-auth_sspi_server_init(WCHAR* service,
-    WCHAR* mechoid,
-    sspi_server_state* state) {
+auth_sspi_server_init(WCHAR* service, sspi_server_state* state) {
     SECURITY_STATUS status;
     TimeStamp ignored;
 
@@ -276,7 +274,6 @@ auth_sspi_server_init(WCHAR* service,
     state->haveCred = 0;
     state->haveCtx = 0;
     state->spn = _wcsdup(service);
-    state->mechoid = _wcsdup(mechoid);
     if (state->spn == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return AUTH_GSS_ERROR;
@@ -296,7 +293,7 @@ auth_sspi_server_init(WCHAR* service,
     status = AcquireCredentialsHandleW(/* Principal */
         NULL,
         /* Security package name */
-        mechoid,
+        L"Negotiate",
         /* Credentials Use */
         SECPKG_CRED_INBOUND,
         /* LogonID (We don't use this) */
@@ -440,14 +437,12 @@ done:
 INT
 auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge) {
     SecBufferDesc inbuf;
-    SecBuffer inBufs[2];
+    SecBuffer inBufs[1];
     SecBufferDesc outbuf;
     SecBuffer outBufs[1];
     ULONG ignored;
     SECURITY_STATUS status = AUTH_GSS_CONTINUE;
     DWORD len;
-    BOOL haveToken = FALSE;
-    INT tokenBufferIndex = 0;
 
     if (state->response != NULL) {
         free(state->response);
@@ -456,32 +451,19 @@ auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge) {
 
     inbuf.ulVersion = SECBUFFER_VERSION;
     inbuf.pBuffers = inBufs;
-    inbuf.cBuffers = 0;
-
-    tokenBufferIndex = inbuf.cBuffers;
-    haveToken = TRUE;
-    inBufs[tokenBufferIndex].BufferType = SECBUFFER_TOKEN;
-    inBufs[tokenBufferIndex].pvBuffer = base64_decode(challenge, &len);
-    if (!inBufs[tokenBufferIndex].pvBuffer) {
+    inbuf.cBuffers = 1;
+    inBufs[0].BufferType = SECBUFFER_TOKEN;
+    inBufs[0].pvBuffer = base64_decode(challenge, &len);
+    if (!inBufs[0].pvBuffer) {
         return AUTH_GSS_ERROR;
     }
-    inBufs[tokenBufferIndex].cbBuffer = len;
-    inbuf.cBuffers++;
-
-    /* Get cbMaxToken size for the output buffer */
-    PSecPkgInfo pkgInfo;
-    status = QuerySecurityPackageInfo(wide_to_utf8(state->mechoid), &pkgInfo);
-    if (status != SEC_E_OK) {
-        set_gsserror(status, "QuerySecurityPackageInfo");
-        status = AUTH_GSS_ERROR;
-        goto done;
-    }
+    inBufs[0].cbBuffer = len;
 
     outbuf.ulVersion = SECBUFFER_VERSION;
     outbuf.cBuffers = 1;
     outbuf.pBuffers = outBufs;
     outBufs[0].pvBuffer = NULL;
-    outBufs[0].cbBuffer = pkgInfo->cbMaxToken;
+    outBufs[0].cbBuffer = 0;
     outBufs[0].BufferType = SECBUFFER_TOKEN;
 
     Py_BEGIN_ALLOW_THREADS
@@ -492,7 +474,7 @@ auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge) {
             /* Buff */
             &inbuf,
             /* Flags */
-            NULL,
+            ASC_REQ_ALLOCATE_MEMORY,
             /* Target data representation */
             SECURITY_NETWORK_DREP,
             /* CtxtHandle (Set on first call) */
@@ -541,8 +523,8 @@ auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge) {
         status = AUTH_GSS_CONTINUE;
     }
 done:
-    if (haveToken) {
-        free(inBufs[tokenBufferIndex].pvBuffer);
+    if (inBufs[0].pvBuffer) {
+        free(inBufs[0].pvBuffer);
     }
     if (outBufs[0].pvBuffer) {
         FreeContextBuffer(outBufs[0].pvBuffer);

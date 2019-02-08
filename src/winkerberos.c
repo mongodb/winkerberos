@@ -434,42 +434,21 @@ done:
 }
 
 static PyObject*
-sspi_server_init(PyObject* self, PyObject* args, PyObject* kw) {
+sspi_server_init(PyObject* self, PyObject* args) {
     sspi_server_state* state;
     PyObject* pyctx = NULL;
     PyObject* serviceobj;
-    PyObject* mechoidobj = Py_None;
     WCHAR *service = NULL;
     Py_ssize_t slen = 0;
-    WCHAR *mechoid = GSS_MECH_OID_KRB5;
     PyObject* resultobj = NULL;
     INT result = 0;
-    static SEC_CHAR* keywords[] = {
-        "service", "mech_oid", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args,
-        kw,
-        "O|O",
-        keywords,
-        &serviceobj,
-        &mechoidobj)) {
+    if (!PyArg_ParseTuple(args, "O", &serviceobj)) {
         return NULL;
     }
 
     if (!StringObject_AsWCHAR(serviceobj, 1, FALSE, &service, &slen)) {
         goto done;
-    }
-
-    if (mechoidobj != Py_None) {
-        if (!PyCObject_Check(mechoidobj)) {
-            PyErr_SetString(PyExc_TypeError, "Invalid type for mech_oid");
-            goto done;
-        }
-        mechoid = (WCHAR*)PyCObject_AsVoidPtr(mechoidobj);
-        if (mechoid == NULL) {
-            PyErr_SetString(PyExc_TypeError, "Invalid value for mech_oid");
-            goto done;
-        }
     }
 
     state = (sspi_server_state*)malloc(sizeof(sspi_server_state));
@@ -483,8 +462,7 @@ sspi_server_init(PyObject* self, PyObject* args, PyObject* kw) {
         goto done;
     }
 
-    result = auth_sspi_server_init(
-        service, mechoid, state);
+    result = auth_sspi_server_init(service, state);
     if (result == AUTH_GSS_ERROR) {
         Py_DECREF(pyctx);
         goto done;
@@ -1044,8 +1022,8 @@ sspi_client_wrap(PyObject* self, PyObject* args) {
 static PyMethodDef WinKerberosClientMethods[] = {
     {"authGSSClientInit", (PyCFunction)sspi_client_init,
      METH_VARARGS | METH_KEYWORDS, sspi_client_init_doc},
-    { "authGSSServerInit", (PyCFunction)sspi_server_init,
-     METH_VARARGS | METH_KEYWORDS },
+    { "authGSSServerInit", sspi_server_init,
+     METH_VARARGS },
     {"authGSSClientClean", sspi_client_clean,
      METH_VARARGS, sspi_client_clean_doc},
     { "authGSSServerClean", sspi_server_clean,
