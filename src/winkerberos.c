@@ -734,14 +734,13 @@ sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
 }
 
 static PyObject*
-sspi_server_step(PyObject* self, PyObject* args, PyObject* keywds) {
+sspi_server_step(PyObject* self, PyObject* args) {
     sspi_server_state* state;
     PyObject* pyctx;
     SEC_CHAR* challenge = NULL;
     INT result = 0;
-    static char *kwlist[] = { "state", "challenge", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os", kwlist, &pyctx, &challenge)) {
+    if (!PyArg_ParseTuple(args, "Os", &pyctx, &challenge)) {
         return NULL;
     }
 
@@ -1032,8 +1031,8 @@ static PyMethodDef WinKerberosClientMethods[] = {
      METH_VARARGS | METH_KEYWORDS, sspi_channel_bindings_doc},
     {"authGSSClientStep", (PyCFunction)sspi_client_step,
      METH_VARARGS | METH_KEYWORDS, sspi_client_step_doc},
-    { "authGSSServerStep", (PyCFunction)sspi_server_step,
-     METH_VARARGS | METH_KEYWORDS },
+    { "authGSSServerStep", sspi_server_step,
+     METH_VARARGS },
     {"authGSSClientResponse", sspi_client_response,
      METH_VARARGS, sspi_client_response_doc},
     { "authGSSServerResponse", sspi_server_response,
