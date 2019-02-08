@@ -200,15 +200,15 @@ destroy_sspi_client(VOID* obj) {
 static VOID
 #if PY_MAJOR_VERSION >=3
 destroy_sspi_server(PyObject* obj) {
-	sspi_server_state* state = PyCapsule_GetPointer(obj, NULL);
+    sspi_server_state* state = PyCapsule_GetPointer(obj, NULL);
 #else
 destroy_sspi_server(VOID* obj) {
-	sspi_server_state* state = (sspi_server_state*)obj;
+    sspi_server_state* state = (sspi_server_state*)obj;
 #endif
-	if (state) {
-		destroy_sspi_server_state(state);
-		free(state);
-	}
+    if (state) {
+        destroy_sspi_server_state(state);
+        free(state);
+    }
 }
 
 PyDoc_STRVAR(sspi_client_init_doc,
@@ -435,70 +435,70 @@ done:
 
 static PyObject*
 sspi_server_init(PyObject* self, PyObject* args, PyObject* kw) {
-	sspi_server_state* state;
-	PyObject* pyctx = NULL;
-	PyObject* serviceobj;
-	PyObject* mechoidobj = Py_None;
-	WCHAR *service = NULL;
-	Py_ssize_t slen = 0;
-	WCHAR *mechoid = GSS_MECH_OID_KRB5;
-	PyObject* resultobj = NULL;
-	INT result = 0;
-	static SEC_CHAR* keywords[] = {
-		"service", "mech_oid", NULL };
+    sspi_server_state* state;
+    PyObject* pyctx = NULL;
+    PyObject* serviceobj;
+    PyObject* mechoidobj = Py_None;
+    WCHAR *service = NULL;
+    Py_ssize_t slen = 0;
+    WCHAR *mechoid = GSS_MECH_OID_KRB5;
+    PyObject* resultobj = NULL;
+    INT result = 0;
+    static SEC_CHAR* keywords[] = {
+        "service", "mech_oid", NULL };
 
-	if (!PyArg_ParseTupleAndKeywords(args,
-		kw,
-		"O|O",
-		keywords,
-		&serviceobj,
-		&mechoidobj)) {
-		return NULL;
-	}
+    if (!PyArg_ParseTupleAndKeywords(args,
+        kw,
+        "O|O",
+        keywords,
+        &serviceobj,
+        &mechoidobj)) {
+        return NULL;
+    }
 
-	if (!StringObject_AsWCHAR(serviceobj, 1, FALSE, &service, &slen)) {
-		goto done;
-	}
+    if (!StringObject_AsWCHAR(serviceobj, 1, FALSE, &service, &slen)) {
+        goto done;
+    }
 
-	if (mechoidobj != Py_None) {
-		if (!PyCObject_Check(mechoidobj)) {
-			PyErr_SetString(PyExc_TypeError, "Invalid type for mech_oid");
-			goto done;
-		}
-		mechoid = (WCHAR*)PyCObject_AsVoidPtr(mechoidobj);
-		if (mechoid == NULL) {
-			PyErr_SetString(PyExc_TypeError, "Invalid value for mech_oid");
-			goto done;
-		}
-	}
+    if (mechoidobj != Py_None) {
+        if (!PyCObject_Check(mechoidobj)) {
+            PyErr_SetString(PyExc_TypeError, "Invalid type for mech_oid");
+            goto done;
+        }
+        mechoid = (WCHAR*)PyCObject_AsVoidPtr(mechoidobj);
+        if (mechoid == NULL) {
+            PyErr_SetString(PyExc_TypeError, "Invalid value for mech_oid");
+            goto done;
+        }
+    }
 
-	state = (sspi_server_state*)malloc(sizeof(sspi_server_state));
-	if (state == NULL) {
-		goto memoryerror;
-	}
+    state = (sspi_server_state*)malloc(sizeof(sspi_server_state));
+    if (state == NULL) {
+        goto memoryerror;
+    }
 
-	pyctx = PyCObject_FromVoidPtr(state, &destroy_sspi_server);
-	if (pyctx == NULL) {
-		free(state);
-		goto done;
-	}
+    pyctx = PyCObject_FromVoidPtr(state, &destroy_sspi_server);
+    if (pyctx == NULL) {
+        free(state);
+        goto done;
+    }
 
-	result = auth_sspi_server_init(
-		service, mechoid, state);
-	if (result == AUTH_GSS_ERROR) {
-		Py_DECREF(pyctx);
-		goto done;
-	}
+    result = auth_sspi_server_init(
+        service, mechoid, state);
+    if (result == AUTH_GSS_ERROR) {
+        Py_DECREF(pyctx);
+        goto done;
+    }
 
-	resultobj = Py_BuildValue("(iN)", result, pyctx);
-	goto done;
+    resultobj = Py_BuildValue("(iN)", result, pyctx);
+    goto done;
 
 memoryerror:
-	PyErr_SetNone(PyExc_MemoryError);
+    PyErr_SetNone(PyExc_MemoryError);
 
 done:
-	free(service);
-	return resultobj;
+    free(service);
+    return resultobj;
 }
 
 PyDoc_STRVAR(sspi_client_clean_doc,
@@ -521,8 +521,8 @@ sspi_client_clean(PyObject* self, PyObject* args) {
 
 static PyObject*
 sspi_server_clean(PyObject* self, PyObject* args) {
-	/* Do nothing. For compatibility with pykerberos only. */
-	return Py_BuildValue("i", AUTH_GSS_COMPLETE);
+    /* Do nothing. For compatibility with pykerberos only. */
+    return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
 
 #if PY_MAJOR_VERSION >= 3
@@ -757,36 +757,36 @@ sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
 
 static PyObject*
 sspi_server_step(PyObject* self, PyObject* args, PyObject* keywds) {
-	sspi_server_state* state;
-	PyObject* pyctx;
-	SEC_CHAR* challenge = NULL;
-	INT result = 0;
-	static char *kwlist[] = { "state", "challenge", NULL };
+    sspi_server_state* state;
+    PyObject* pyctx;
+    SEC_CHAR* challenge = NULL;
+    INT result = 0;
+    static char *kwlist[] = { "state", "challenge", NULL };
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os", kwlist, &pyctx, &challenge)) {
-		return NULL;
-	}
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os", kwlist, &pyctx, &challenge)) {
+        return NULL;
+    }
 
-	if (_string_too_long("challenge", strlen(challenge))) {
-		return NULL;
-	}
+    if (_string_too_long("challenge", strlen(challenge))) {
+        return NULL;
+    }
 
-	if (!PyCObject_Check(pyctx)) {
-		PyErr_SetString(PyExc_TypeError, "Expected a context object");
-		return NULL;
-	}
+    if (!PyCObject_Check(pyctx)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a context object");
+        return NULL;
+    }
 
-	state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
-	if (state == NULL) {
-		return NULL;
-	}
+    state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
+    if (state == NULL) {
+        return NULL;
+    }
 
-	result = auth_sspi_server_step(state, challenge);
-	if (result == AUTH_GSS_ERROR) {
-		return NULL;
-	}
+    result = auth_sspi_server_step(state, challenge);
+    if (result == AUTH_GSS_ERROR) {
+        return NULL;
+    }
 
-	return Py_BuildValue("i", result);
+    return Py_BuildValue("i", result);
 }
 
 PyDoc_STRVAR(sspi_client_response_doc,
@@ -823,24 +823,24 @@ sspi_client_response(PyObject* self, PyObject* args) {
 
 static PyObject*
 sspi_server_response(PyObject* self, PyObject* args) {
-	sspi_server_state* state;
-	PyObject* pyctx;
+    sspi_server_state* state;
+    PyObject* pyctx;
 
-	if (!PyArg_ParseTuple(args, "O", &pyctx)) {
-		return NULL;
-	}
+    if (!PyArg_ParseTuple(args, "O", &pyctx)) {
+        return NULL;
+    }
 
-	if (!PyCObject_Check(pyctx)) {
-		PyErr_SetString(PyExc_TypeError, "Expected a context object");
-		return NULL;
-	}
+    if (!PyCObject_Check(pyctx)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a context object");
+        return NULL;
+    }
 
-	state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
-	if (state == NULL) {
-		return NULL;
-	}
+    state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
+    if (state == NULL) {
+        return NULL;
+    }
 
-	return Py_BuildValue("s", state->response);
+    return Py_BuildValue("s", state->response);
 }
 
 PyDoc_STRVAR(sspi_client_response_conf_doc,
@@ -914,24 +914,24 @@ sspi_client_username(PyObject* self, PyObject* args) {
 
 static PyObject*
 sspi_server_username(PyObject* self, PyObject* args) {
-	sspi_server_state* state;
-	PyObject* pyctx;
+    sspi_server_state* state;
+    PyObject* pyctx;
 
-	if (!PyArg_ParseTuple(args, "O", &pyctx)) {
-		return NULL;
-	}
+    if (!PyArg_ParseTuple(args, "O", &pyctx)) {
+        return NULL;
+    }
 
-	if (!PyCObject_Check(pyctx)) {
-		PyErr_SetString(PyExc_TypeError, "Expected a context object");
-		return NULL;
-	}
+    if (!PyCObject_Check(pyctx)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a context object");
+        return NULL;
+    }
 
-	state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
-	if (state == NULL) {
-		return NULL;
-	}
+    state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
+    if (state == NULL) {
+        return NULL;
+    }
 
-	return Py_BuildValue("s", state->username);
+    return Py_BuildValue("s", state->username);
 }
 
 PyDoc_STRVAR(sspi_client_unwrap_doc,
@@ -1044,28 +1044,28 @@ sspi_client_wrap(PyObject* self, PyObject* args) {
 static PyMethodDef WinKerberosClientMethods[] = {
     {"authGSSClientInit", (PyCFunction)sspi_client_init,
      METH_VARARGS | METH_KEYWORDS, sspi_client_init_doc},
-	{ "authGSSServerInit", (PyCFunction)sspi_server_init,
-	 METH_VARARGS | METH_KEYWORDS },
+    { "authGSSServerInit", (PyCFunction)sspi_server_init,
+     METH_VARARGS | METH_KEYWORDS },
     {"authGSSClientClean", sspi_client_clean,
      METH_VARARGS, sspi_client_clean_doc},
-	{ "authGSSServerClean", sspi_server_clean,
-	 METH_VARARGS },
+    { "authGSSServerClean", sspi_server_clean,
+     METH_VARARGS },
     {"channelBindings", (PyCFunction)sspi_channel_bindings,
      METH_VARARGS | METH_KEYWORDS, sspi_channel_bindings_doc},
     {"authGSSClientStep", (PyCFunction)sspi_client_step,
      METH_VARARGS | METH_KEYWORDS, sspi_client_step_doc},
-	{ "authGSSServerStep", (PyCFunction)sspi_server_step,
-	 METH_VARARGS | METH_KEYWORDS },
+    { "authGSSServerStep", (PyCFunction)sspi_server_step,
+     METH_VARARGS | METH_KEYWORDS },
     {"authGSSClientResponse", sspi_client_response,
      METH_VARARGS, sspi_client_response_doc},
-	{ "authGSSServerResponse", sspi_server_response,
-	 METH_VARARGS },
+    { "authGSSServerResponse", sspi_server_response,
+     METH_VARARGS },
     {"authGSSClientResponseConf", sspi_client_response_conf,
      METH_VARARGS, sspi_client_response_conf_doc},
     {"authGSSClientUsername", sspi_client_username,
      METH_VARARGS, sspi_client_username_doc},
-	{ "authGSSServerUsername", sspi_server_username,
-	 METH_VARARGS },
+    { "authGSSServerUsername", sspi_server_username,
+     METH_VARARGS },
     {"authGSSClientUnwrap", sspi_client_unwrap,
      METH_VARARGS, sspi_client_unwrap_doc},
     {"authGSSClientWrap", sspi_client_wrap,

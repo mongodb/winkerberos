@@ -47,16 +47,16 @@ typedef struct {
 } sspi_client_state;
 
 typedef struct {
-	CredHandle cred;
-	CtxtHandle ctx;
-	WCHAR* spn;
-	SEC_CHAR* response;
-	SEC_CHAR* username;
-	ULONG flags;
-	UCHAR haveCred;
-	UCHAR haveCtx;
-	ULONG qop;
-	WCHAR* mechoid;
+    CredHandle cred;
+    CtxtHandle ctx;
+    WCHAR* spn;
+    SEC_CHAR* response;
+    SEC_CHAR* username;
+    ULONG flags;
+    UCHAR haveCred;
+    UCHAR haveCtx;
+    ULONG qop;
+    WCHAR* mechoid;
 } sspi_server_state;
 
 VOID set_gsserror(DWORD errCode, const SEC_CHAR* msg);
@@ -73,8 +73,8 @@ INT auth_sspi_client_init(WCHAR* service,
                           WCHAR* mechoid,
                           sspi_client_state* state);
 INT auth_sspi_server_init(WCHAR* service,
-	WCHAR* mechoid,
-	sspi_server_state* state);
+    WCHAR* mechoid,
+    sspi_server_state* state);
 
 INT auth_sspi_client_step(sspi_client_state* state, SEC_CHAR* challenge, SecPkgContext_Bindings* sec_pkg_context_bindings);
 INT auth_sspi_server_step(sspi_server_state* state, SEC_CHAR* challenge);
