@@ -433,6 +433,23 @@ done:
     return resultobj;
 }
 
+PyDoc_STRVAR(sspi_server_init_doc,
+"authGSSServerInit(service)\n"
+"\n"
+"Initializes a context for Kerberos SSPI server side authentication with\n"
+"the given service principal.\n"
+"\n"
+":Parameters:\n"
+"  - `service`: A string containing the service principal in RFC-2078 format\n"
+"    (``service@hostname``) or SPN format (``service/hostname`` or\n"
+"    ``service/hostname@REALM``).\n"
+"\n"
+":Returns: A tuple of (result, context) where result is\n"
+"          :data:`AUTH_GSS_COMPLETE` and context is an opaque value passed\n"
+"          in subsequent function calls.\n"
+"\n"
+".. versionadded:: 0.8.0");
+
 static PyObject*
 sspi_server_init(PyObject* self, PyObject* args) {
     sspi_server_state* state;
@@ -482,9 +499,9 @@ done:
 PyDoc_STRVAR(sspi_client_clean_doc,
 "authGSSClientClean(context)\n"
 "\n"
-"Destroys the context. This function is provided for API compatibility with\n"
-"pykerberos but does nothing. The context object destroys itself when it\n"
-"is reclaimed.\n"
+"Destroys the client context. This function is provided for API\n"
+"compatibility with pykerberos but does nothing. The context object\n"
+"destroys itself when it is reclaimed.\n"
 "\n"
 ":Parameters:\n"
 "  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
@@ -496,6 +513,20 @@ sspi_client_clean(PyObject* self, PyObject* args) {
     /* Do nothing. For compatibility with pykerberos only. */
     return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
+
+PyDoc_STRVAR(sspi_server_clean_doc,
+"authGSSServerClean(context)\n"
+"\n"
+"Destroys the server context. This function is provided for API\n"
+"compatibility with pykerberos but does nothing. The context object\n"
+"destroys itself when it is reclaimed.\n"
+"\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSServerInit`.\n"
+"\n"
+":Returns: :data:`AUTH_GSS_COMPLETE`\n"
+"\n"
+".. versionadded:: 0.8.0");
 
 static PyObject*
 sspi_server_clean(PyObject* self, PyObject* args) {
@@ -573,7 +604,10 @@ PyDoc_STRVAR(sspi_channel_bindings_doc,
 "    {cert-hash} is the hash of the server's certificate.\n"
 "\n"
 ":Returns: An opaque value to be passed to the ``channel_bindings`` parameter of\n"
-"    :func:`authGSSClientStep`");
+"    :func:`authGSSClientStep`\n"
+"\n"
+".. versionadded:: 0.7.0");
+
 static PyObject*
 sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     static char* kwlist[] = {"initiator_addrtype", "initiator_address", "acceptor_addrtype",
@@ -733,6 +767,19 @@ sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
     return Py_BuildValue("i", result);
 }
 
+PyDoc_STRVAR(sspi_server_step_doc,
+"authGSSServerStep(context, challenge)\n"
+"\n"
+"Executes a single Kerberos SSPI server step using the supplied client data.\n"
+"\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
+"  - `challenge`: A string containing the base64 encoded client data.\n"
+"\n"
+":Returns: :data:`AUTH_GSS_CONTINUE` or :data:`AUTH_GSS_COMPLETE`\n"
+"\n"
+".. versionadded:: 0.8.0");
+
 static PyObject*
 sspi_server_step(PyObject* self, PyObject* args) {
     sspi_server_state* state;
@@ -797,6 +844,18 @@ sspi_client_response(PyObject* self, PyObject* args) {
 
     return Py_BuildValue("s", state->response);
 }
+
+PyDoc_STRVAR(sspi_server_response_doc,
+"authGSSServerResponse(context)\n"
+"\n"
+"Get the response to the last successful server operation.\n"
+"\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSServerInit`.\n"
+"\n"
+":Returns: A base64 encoded string to be sent to the client.\n"
+"\n"
+".. versionadded:: 0.8.0");
 
 static PyObject*
 sspi_server_response(PyObject* self, PyObject* args) {
@@ -888,6 +947,20 @@ sspi_client_username(PyObject* self, PyObject* args) {
 
     return Py_BuildValue("s", state->username);
 }
+
+PyDoc_STRVAR(sspi_server_username_doc,
+"authGSSServerUserName(context)\n"
+"\n"
+"Get the user name of the primcipal trying to authenticate to the server.\n"
+"Will only succeed after :func:`authGSSServerStep` returns a complete or\n"
+"continue response.\n"
+"\n"
+":Parameters:\n"
+"  - `context`: The context object returned by :func:`authGSSServerInit`.\n"
+"\n"
+":Returns: A string containing the username.\n"
+"\n"
+".. versionadded:: 0.8.0");
 
 static PyObject*
 sspi_server_username(PyObject* self, PyObject* args) {
@@ -1022,27 +1095,27 @@ static PyMethodDef WinKerberosClientMethods[] = {
     {"authGSSClientInit", (PyCFunction)sspi_client_init,
      METH_VARARGS | METH_KEYWORDS, sspi_client_init_doc},
     { "authGSSServerInit", sspi_server_init,
-     METH_VARARGS },
+     METH_VARARGS, sspi_server_init_doc},
     {"authGSSClientClean", sspi_client_clean,
      METH_VARARGS, sspi_client_clean_doc},
     { "authGSSServerClean", sspi_server_clean,
-     METH_VARARGS },
+     METH_VARARGS, sspi_server_clean_doc},
     {"channelBindings", (PyCFunction)sspi_channel_bindings,
      METH_VARARGS | METH_KEYWORDS, sspi_channel_bindings_doc},
     {"authGSSClientStep", (PyCFunction)sspi_client_step,
      METH_VARARGS | METH_KEYWORDS, sspi_client_step_doc},
     { "authGSSServerStep", sspi_server_step,
-     METH_VARARGS },
+     METH_VARARGS, sspi_server_step_doc},
     {"authGSSClientResponse", sspi_client_response,
      METH_VARARGS, sspi_client_response_doc},
     { "authGSSServerResponse", sspi_server_response,
-     METH_VARARGS },
+     METH_VARARGS, sspi_server_response_doc},
     {"authGSSClientResponseConf", sspi_client_response_conf,
      METH_VARARGS, sspi_client_response_conf_doc},
     {"authGSSClientUserName", sspi_client_username,
      METH_VARARGS, sspi_client_username_doc},
     { "authGSSServerUserName", sspi_server_username,
-     METH_VARARGS },
+     METH_VARARGS, sspi_server_username_doc},
     {"authGSSClientUnwrap", sspi_client_unwrap,
      METH_VARARGS, sspi_client_unwrap_doc},
     {"authGSSClientWrap", sspi_client_wrap,
