@@ -773,7 +773,7 @@ PyDoc_STRVAR(sspi_server_step_doc,
 "Executes a single Kerberos SSPI server step using the supplied client data.\n"
 "\n"
 ":Parameters:\n"
-"  - `context`: The context object returned by :func:`authGSSClientInit`.\n"
+"  - `context`: The context object returned by :func:`authGSSServerInit`.\n"
 "  - `challenge`: A string containing the base64 encoded client data.\n"
 "\n"
 ":Returns: :data:`AUTH_GSS_CONTINUE` or :data:`AUTH_GSS_COMPLETE`\n"
