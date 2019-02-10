@@ -21,15 +21,10 @@
 #if PY_MAJOR_VERSION >= 3
 #define PyInt_FromLong PyLong_FromLong
 #define PyString_FromString PyUnicode_FromString
-#endif
-
-#if PY_VERSION_HEX >= 0x03020000
 #define PyCObject_Check PyCapsule_CheckExact
 #define PyCObject_FromVoidPtr(cobj, destr) PyCapsule_New(cobj, NULL, destr)
 #define PyCObject_AsVoidPtr(self) PyCapsule_GetPointer(self, NULL)
-#endif
-
-#if PY_VERSION_HEX < 0x03030000
+#else
 #define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
 #endif
 

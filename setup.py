@@ -76,11 +76,6 @@ with open("README.rst") as f:
         readme = ""
 
 tests_require = ["pymongo >= 2.9"]
-if sys.version_info[:2] == (2, 6):
-    tests_require.append("unittest2 >= 0.5.1")
-    test_suite = "unittest2.collector"
-else:
-    test_suite = "test"
 
 chost = os.environ.get("MINGW_CHOST") #ie: i686-w64-mingw32
 if chost:
@@ -106,7 +101,7 @@ setup(
     url="https://github.com/mongodb-labs/winkerberos",
     keywords=["Kerberos", "SSPI", "GSSAPI"],
     install_requires=[],
-    test_suite=test_suite,
+    test_suite="test",
     tests_require=tests_require,
     platforms="Windows",
     license="Apache License, Version 2.0",
@@ -116,10 +111,8 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
