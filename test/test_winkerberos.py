@@ -247,12 +247,12 @@ class TestWinKerberos(unittest.TestCase):
         try:
             self.authenticate(password=password)
         except kerberos.GSSError as exc:
-            self.fail("Failed bytearray: %s" % (str(exc),))
+            self.fail("Failed bytearray: {}".format(str(exc)))
 
         try:
             self.authenticate(password=memoryview(password))
         except kerberos.GSSError as exc:
-            self.fail("Failed memoryview: %s" % (str(exc),))
+            self.fail("Failed memoryview: {}".format(str(exc)))
 
         # mmap.mmap and array.array only expose the
         # buffer interface in python 3.x
@@ -263,7 +263,7 @@ class TestWinKerberos(unittest.TestCase):
             try:
                 self.authenticate(password=mm)
             except kerberos.GSSError as exc:
-                self.fail("Failed map.map: %s" % (str(exc),))
+                self.fail("Failed map.map: {}".format(str(exc)))
 
             # Note that only ascii and utf8 strings are supported, so
             # 'u' with a unicode object won't work. Unicode objects
@@ -271,7 +271,7 @@ class TestWinKerberos(unittest.TestCase):
             try:
                 self.authenticate(password=array.array('b', password))
             except kerberos.GSSError as exc:
-                self.fail("Failed array.array: %s" % (str(exc),))
+                self.fail("Failed array.array: {}".format(str(exc)))
 
     def test_principal(self):
         if _PRINCIPAL is None:
@@ -280,7 +280,7 @@ class TestWinKerberos(unittest.TestCase):
             self.authenticate(
                 principal=_PRINCIPAL, user=None, domain=None, password=None)
         except kerberos.GSSError as exc:
-            self.fail("Failed testing principal: %s" % (str(exc),))
+            self.fail("Failed testing principal: {}".format(str(exc)))
 
         encoded = bytearray(_PRINCIPAL, "utf8")
         # No error.
