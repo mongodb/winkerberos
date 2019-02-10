@@ -17,11 +17,7 @@ import base64
 import mmap
 import os
 import sys
-
-if sys.version_info[:2] == (2, 6):
-    import unittest2 as unittest
-else:
-    import unittest
+import unittest
 
 sys.path[0:0] = [""]
 
@@ -253,12 +249,10 @@ class TestWinKerberos(unittest.TestCase):
         except kerberos.GSSError as exc:
             self.fail("Failed bytearray: %s" % (str(exc),))
 
-        # memoryview doesn't exist in python 2.6
-        if sys.version_info[:2] >= (2, 7):
-            try:
-                self.authenticate(password=memoryview(password))
-            except kerberos.GSSError as exc:
-                self.fail("Failed memoryview: %s" % (str(exc),))
+        try:
+            self.authenticate(password=memoryview(password))
+        except kerberos.GSSError as exc:
+            self.fail("Failed memoryview: %s" % (str(exc),))
 
         # mmap.mmap and array.array only expose the
         # buffer interface in python 3.x
