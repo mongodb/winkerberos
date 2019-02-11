@@ -15,6 +15,9 @@
 import os
 import sys
 
+if sys.version_info[:2] < (2, 7):
+    raise RuntimeError("Python version >= 2.7 required.")
+
 # http://bugs.python.org/issue15881
 try:
     import multiprocessing
