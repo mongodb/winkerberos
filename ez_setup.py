@@ -315,7 +315,13 @@ def _extractall(self, path=".", members=None):
         self.extract(tarinfo, path)
 
     # Reverse sort directories.
-    directories.sort(key=operator.attrgetter('name'), reverse=True)
+    if sys.version_info < (2, 4):
+        def sorter(dir1, dir2):
+            return cmp(dir1.name, dir2.name)
+        directories.sort(sorter)
+        directories.reverse()
+    else:
+        directories.sort(key=operator.attrgetter('name'), reverse=True)
 
     # Set correct owner, mtime and filemode on directories.
     for tarinfo in directories:
@@ -338,6 +344,9 @@ def _build_install_args(options):
     """
     install_args = []
     if options.user_install:
+        if sys.version_info < (2, 6):
+            log.warn("--user requires Python 2.6 or later")
+            raise SystemExit(1)
         install_args.append('--user')
     return install_args
 
@@ -348,7 +357,7 @@ def _parse_args():
     parser = optparse.OptionParser()
     parser.add_option(
         '--user', dest='user_install', action='store_true', default=False,
-        help='install in user site package')
+        help='install in user site package (requires Python 2.6 or later)')
     parser.add_option(
         '--download-base', dest='download_base', metavar="URL",
         default=DEFAULT_URL,
