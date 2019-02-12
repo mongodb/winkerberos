@@ -14,6 +14,7 @@ Changes in Version 0.8.0
 
 - `authGSSClientUsername` has been renamed
   :func:`winkerberos.authGSSClientUserName` to match ccs-pykerberos.
+- WinKerberos no longer supports Python 2.6 or Python 3.3.
 
 Changes in Version 0.7.0
 ------------------------
