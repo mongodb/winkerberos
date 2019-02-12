@@ -270,6 +270,7 @@ auth_sspi_server_init(WCHAR* service, sspi_server_state* state) {
     TimeStamp ignored;
 
     state->response = NULL;
+    state->username = NULL;
     state->qop = SECQOP_WRAP_NO_ENCRYPT;
     state->haveCred = 0;
     state->haveCtx = 0;
