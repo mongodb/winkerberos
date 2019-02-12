@@ -21,12 +21,15 @@
 #if PY_MAJOR_VERSION >= 3
 #define PyInt_FromLong PyLong_FromLong
 #define PyString_FromString PyUnicode_FromString
-#define PyCObject_Check PyCapsule_CheckExact
-#define PyCObject_FromVoidPtr(cobj, destr) PyCapsule_New(cobj, NULL, destr)
-#define PyCObject_AsVoidPtr(self) PyCapsule_GetPointer(self, NULL)
 #else
 #define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
 #endif
+
+#define MECH_OID_KRB5_CAPSULE_NAME "winkerberos.GSS_MECH_OID_KRB5"
+#define MECH_OID_SPNEGO_CAPSULE_NAME "winkerberos.GSS_MECH_OID_SPNEGO"
+#define CLIENT_CTX_CAPSULE_NAME "GSSAPIClientContext"
+#define SERVER_CTX_CAPSULE_NAME "GSSAPIServerContext"
+#define CHANNEL_BINDINGS_CTX_CAPSULE_NAME "GSSAPIChannelBindingsContext"
 
 PyDoc_STRVAR(winkerberos_documentation,
 "A native Kerberos SSPI client implementation.\n"
@@ -179,13 +182,8 @@ StringObject_AsWCHAR(PyObject* arg,
 }
 
 static VOID
-#if PY_MAJOR_VERSION >=3
 destroy_sspi_client(PyObject* obj) {
-    sspi_client_state* state = PyCapsule_GetPointer(obj, NULL);
-#else
-destroy_sspi_client(VOID* obj) {
-    sspi_client_state* state = (sspi_client_state*)obj;
-#endif
+    sspi_client_state* state = PyCapsule_GetPointer(obj, PyCapsule_GetName(obj));
     if (state) {
         destroy_sspi_client_state(state);
         free(state);
@@ -193,13 +191,8 @@ destroy_sspi_client(VOID* obj) {
 }
 
 static VOID
-#if PY_MAJOR_VERSION >=3
 destroy_sspi_server(PyObject* obj) {
-    sspi_server_state* state = PyCapsule_GetPointer(obj, NULL);
-#else
-destroy_sspi_server(VOID* obj) {
-    sspi_server_state* state = (sspi_server_state*)obj;
-#endif
+    sspi_server_state* state = PyCapsule_GetPointer(obj, PyCapsule_GetName(obj));
     if (state) {
         destroy_sspi_server_state(state);
         free(state);
@@ -376,11 +369,12 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
     }
 
     if (mechoidobj != Py_None) {
-        if (!PyCObject_Check(mechoidobj)) {
+        if (!PyCapsule_CheckExact(mechoidobj)) {
             PyErr_SetString(PyExc_TypeError, "Invalid type for mech_oid");
             goto done;
         }
-        mechoid = (WCHAR*)PyCObject_AsVoidPtr(mechoidobj);
+        /* TODO: check that PyCapsule_GetName returns one of the two valid names. */
+        mechoid = (WCHAR*)PyCapsule_GetPointer(mechoidobj, PyCapsule_GetName(mechoidobj));
         if (mechoid == NULL) {
             PyErr_SetString(PyExc_TypeError, "Invalid value for mech_oid");
             goto done;
@@ -392,7 +386,8 @@ sspi_client_init(PyObject* self, PyObject* args, PyObject* kw) {
         goto memoryerror;
     }
 
-    pyctx = PyCObject_FromVoidPtr(state, &destroy_sspi_client);
+    pyctx = PyCapsule_New(
+        state, CLIENT_CTX_CAPSULE_NAME, &destroy_sspi_client);
     if (pyctx == NULL) {
         free(state);
         goto done;
@@ -468,7 +463,8 @@ sspi_server_init(PyObject* self, PyObject* args) {
         goto memoryerror;
     }
 
-    pyctx = PyCObject_FromVoidPtr(state, &destroy_sspi_server);
+    pyctx = PyCapsule_New(
+        state, SERVER_CTX_CAPSULE_NAME, &destroy_sspi_server);
     if (pyctx == NULL) {
         free(state);
         goto done;
@@ -529,13 +525,8 @@ sspi_server_clean(PyObject* self, PyObject* args) {
     return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
 
-#if PY_MAJOR_VERSION >= 3
 void destruct_channel_bindings_struct(PyObject* o) {
-    SecPkgContext_Bindings* context_bindings = PyCapsule_GetPointer(o, NULL);
-#else
-void destruct_channel_bindings_struct(void* o) {
-    SecPkgContext_Bindings* context_bindings = (SecPkgContext_Bindings *)o;
-#endif
+    SecPkgContext_Bindings* context_bindings = PyCapsule_GetPointer(o, PyCapsule_GetName(o));
     if (context_bindings != NULL) {
         free(context_bindings->Bindings);
         free(context_bindings);
@@ -689,7 +680,8 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
         channel_bindings->dwApplicationDataOffset = 0;
     }
 
-    pychan_bindings = PyCObject_FromVoidPtr(context_bindings, &destruct_channel_bindings_struct);
+    pychan_bindings = PyCapsule_New(
+        context_bindings, CHANNEL_BINDINGS_CTX_CAPSULE_NAME, &destruct_channel_bindings_struct);
     if (pychan_bindings == NULL) {
         free(channel_bindings);
         free(context_bindings);
@@ -733,22 +725,24 @@ sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_client_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_client_state*)PyCapsule_GetPointer(
+        pyctx, CLIENT_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
 
     if (pychan_bindings != NULL) {
-        if (!PyCObject_Check(pychan_bindings)) {
+        if (!PyCapsule_CheckExact(pychan_bindings)) {
             PyErr_SetString(PyExc_TypeError, "Expected a channel bindings object");
             return NULL;
         }
-        sec_pkg_context_bindings = (SecPkgContext_Bindings *)PyCObject_AsVoidPtr(pychan_bindings);
+        sec_pkg_context_bindings = (SecPkgContext_Bindings *)PyCapsule_GetPointer(
+            pychan_bindings, CHANNEL_BINDINGS_CTX_CAPSULE_NAME);
         if (sec_pkg_context_bindings == NULL) {
             return NULL;
         }
@@ -790,12 +784,13 @@ sspi_server_step(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_server_state*)PyCapsule_GetPointer(
+        pyctx, SERVER_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -827,12 +822,13 @@ sspi_client_response(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_client_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_client_state*)PyCapsule_GetPointer(
+        pyctx, CLIENT_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -861,12 +857,13 @@ sspi_server_response(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_server_state*)PyCapsule_GetPointer(
+        pyctx, SERVER_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -897,12 +894,13 @@ sspi_client_response_conf(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_client_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_client_state*)PyCapsule_GetPointer(
+        pyctx, CLIENT_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -930,12 +928,13 @@ sspi_client_username(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_client_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_client_state*)PyCapsule_GetPointer(
+        pyctx, CLIENT_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -966,12 +965,13 @@ sspi_server_username(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_server_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_server_state*)PyCapsule_GetPointer(
+        pyctx, SERVER_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -1006,12 +1006,13 @@ sspi_client_unwrap(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_client_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_client_state*)PyCapsule_GetPointer(
+        pyctx, CLIENT_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -1068,12 +1069,13 @@ sspi_client_wrap(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (!PyCObject_Check(pyctx)) {
+    if (!PyCapsule_CheckExact(pyctx)) {
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-    state = (sspi_client_state*)PyCObject_AsVoidPtr(pyctx);
+    state = (sspi_client_state*)PyCapsule_GetPointer(
+        pyctx, CLIENT_CTX_CAPSULE_NAME);
     if (state == NULL) {
         return NULL;
     }
@@ -1205,10 +1207,10 @@ initwinkerberos(VOID)
                            PyInt_FromLong(0)) ||
         PyModule_AddObject(module,
                            "GSS_MECH_OID_KRB5",
-                           PyCObject_FromVoidPtr(GSS_MECH_OID_KRB5, NULL)) ||
+                           PyCapsule_New(GSS_MECH_OID_KRB5, MECH_OID_KRB5_CAPSULE_NAME, NULL)) ||
         PyModule_AddObject(module,
                            "GSS_MECH_OID_SPNEGO",
-                           PyCObject_FromVoidPtr(GSS_MECH_OID_SPNEGO, NULL)) ||
+                           PyCapsule_New(GSS_MECH_OID_SPNEGO, MECH_OID_SPNEGO_CAPSULE_NAME, NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
                            PyString_FromString("0.8.0.dev0"))) {
