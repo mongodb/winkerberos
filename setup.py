@@ -35,6 +35,7 @@ except ImportError:
 
 try:
     import sphinx
+    import sphinx.cmd.build
     _HAVE_SPHINX = True
 except ImportError:
     _HAVE_SPHINX = False
@@ -62,8 +63,10 @@ class doc(build_ext):
         # the full path to the built docs.
         if hasattr(sphinx, 'build_main'):
             status = sphinx.build_main(sphinx_args)
-        else:
+        elif hasattr(sphinx, 'main'):
             status = sphinx.main(sphinx_args)
+        else:
+            status = sphinx.cmd.build.main(sphinx_args)
 
         if status:
             raise RuntimeError("Documentation build failed")
