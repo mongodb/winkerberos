@@ -35,11 +35,15 @@ except ImportError:
 
 try:
     import sphinx
-    import sphinx.cmd.build
     _HAVE_SPHINX = True
 except ImportError:
     _HAVE_SPHINX = False
-
+try:
+    import sphinx.cmd.build
+except ImportError:
+    # older version of sphinx; should have sphinx.main and won't need this
+    pass
+    
 
 # Sphinx needs to import the built extension to generate
 # html docs, so build the extension inplace first.
@@ -65,8 +69,10 @@ class doc(build_ext):
             status = sphinx.build_main(sphinx_args)
         elif hasattr(sphinx, 'main'):
             status = sphinx.main(sphinx_args)
-        else:
+        elif hasattr(sphinx, 'cmd'):
             status = sphinx.cmd.build.main(sphinx_args)
+        else:
+            status = 1
 
         if status:
             raise RuntimeError("Documentation build failed")
