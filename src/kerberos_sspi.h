@@ -33,6 +33,7 @@ typedef struct _SecPkgContext_Bindings {
 
 #define GSS_MECH_OID_KRB5 L"Kerberos"
 #define GSS_MECH_OID_SPNEGO L"Negotiate"
+#define GSS_MECH_OID_NTLM L"NTLM"
 
 typedef struct {
     CredHandle cred;

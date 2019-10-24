@@ -27,6 +27,7 @@
 
 #define MECH_OID_KRB5_CAPSULE_NAME "winkerberos.GSS_MECH_OID_KRB5"
 #define MECH_OID_SPNEGO_CAPSULE_NAME "winkerberos.GSS_MECH_OID_SPNEGO"
+#define MECH_OID_NTLM_CAPSULE_NAME "winkerberos.GSS_MECH_OID_NTLM"
 #define CLIENT_CTX_CAPSULE_NAME "GSSAPIClientContext"
 #define SERVER_CTX_CAPSULE_NAME "GSSAPIServerContext"
 #define CHANNEL_BINDINGS_CTX_CAPSULE_NAME "GSSAPIChannelBindingsContext"
@@ -1211,6 +1212,9 @@ initwinkerberos(VOID)
         PyModule_AddObject(module,
                            "GSS_MECH_OID_SPNEGO",
                            PyCapsule_New(GSS_MECH_OID_SPNEGO, MECH_OID_SPNEGO_CAPSULE_NAME, NULL)) ||
+        PyModule_AddObject(module,
+                           "GSS_MECH_OID_NTLM",
+                           PyCapsule_New(GSS_MECH_OID_NTLM, MECH_OID_NTLM_CAPSULE_NAME, NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
                            PyString_FromString("0.8.0.dev0"))) {
