@@ -15,6 +15,7 @@
  */
 
 #define SECURITY_WIN32 1 /* Required for SSPI */
+#define PY_SSIZE_T_CLEAN
 
 #include "Python.h"
 #include <Windows.h>
