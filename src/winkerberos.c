@@ -605,9 +605,9 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
 
     unsigned long initiator_addrtype = 0;
     unsigned long acceptor_addrtype = 0;
-    unsigned long initiator_length = 0;
-    unsigned long acceptor_length = 0;
-    unsigned long application_length = 0;
+    Py_ssize_t initiator_length = 0;
+    Py_ssize_t acceptor_length = 0;
+    Py_ssize_t application_length = 0;
     char* initiator_address = NULL;
     char* acceptor_address = NULL;
     char* application_data = NULL;
@@ -623,7 +623,17 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
         return NULL;
     }
 
-    data_length = initiator_length + acceptor_length + application_length;
+    if (_string_too_long("initiator_address", initiator_length)) {
+        return NULL;
+    }
+    if (_string_too_long("acceptor_address", acceptor_length)) {
+        return NULL;
+    }
+    if (_string_too_long("application_data", application_length)) {
+        return NULL;
+    }
+
+    data_length = (unsigned long)(initiator_length + acceptor_length + application_length);
     offset = (unsigned long)sizeof(SEC_CHANNEL_BINDINGS);
 
     context_bindings = (SecPkgContext_Bindings *)malloc(sizeof(SecPkgContext_Bindings));
@@ -642,19 +652,19 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
     context_bindings->Bindings = channel_bindings;
 
     channel_bindings->dwInitiatorAddrType = initiator_addrtype;
-    channel_bindings->cbInitiatorLength = initiator_length;
+    channel_bindings->cbInitiatorLength = (unsigned long)initiator_length;
     if (initiator_address != NULL) {
         channel_bindings->dwInitiatorOffset = offset;
 
         offset_p = &((unsigned char*)channel_bindings)[offset];
         memcpy_s(&offset_p[0], data_length, initiator_address, initiator_length);
-        offset = offset + initiator_length;
+        offset = offset + (unsigned long)initiator_length;
     } else {
         channel_bindings->dwInitiatorOffset = 0;
     }
 
     channel_bindings->dwAcceptorAddrType = acceptor_addrtype;
-    channel_bindings->cbAcceptorLength = acceptor_length;
+    channel_bindings->cbAcceptorLength = (unsigned long)acceptor_length;
     if (acceptor_address != NULL) {
         channel_bindings->dwAcceptorOffset = offset;
 
@@ -663,12 +673,12 @@ sspi_channel_bindings(PyObject* self, PyObject* args, PyObject* keywds) {
                  data_length - initiator_length,
                  acceptor_address,
                  acceptor_length);
-        offset = offset + acceptor_length;
+        offset = offset + (unsigned long)acceptor_length;
     } else {
         channel_bindings->dwAcceptorOffset = 0;
     }
 
-    channel_bindings->cbApplicationDataLength = application_length;
+    channel_bindings->cbApplicationDataLength = (unsigned long)application_length;
     if (application_data != NULL) {
         channel_bindings->dwApplicationDataOffset = offset;
         offset_p = &((unsigned char*) channel_bindings)[offset];
