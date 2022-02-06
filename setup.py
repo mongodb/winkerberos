@@ -89,20 +89,17 @@ with open("README.rst") as f:
 
 tests_require = ["pymongo >= 2.9"]
 
-chost = os.environ.get("MINGW_CHOST") #ie: i686-w64-mingw32
-if chost:
-    #mingw build
-    libpath = os.environ.get("MINGW_PREFIX", "/mingw32")+"/"+chost+"/lib"
-    extra_link_args = ["-lssl", "-lcrypto", "-fPIC",
-        "%s/libcrypt32.a" % libpath,
-        "%s/libsecur32.a" % libpath,
-        "%s/libshlwapi.a" % libpath,
-        ]
-else:
+if 'MSC' in sys.version:
     #msvc:
     extra_link_args = ['crypt32.lib', 'secur32.lib', 'Shlwapi.lib',
            '/NXCOMPAT', '/DYNAMICBASE',
            ]
+else:
+    #mingw:
+    extra_link_args = ['-lcrypt32',
+                        '-lsecur32',
+                        '-lshlwapi']
+
 setup(
     name="winkerberos",
     version="0.8.0",
