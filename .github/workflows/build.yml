@@ -1,0 +1,27 @@
+name: Build
+on: [push, pull_request]
+
+jobs:
+  windows-msys2:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        msystem: [MINGW64, MINGW32, UCRT64, CLANG64]
+    name: Build (${{ matrix.msystem }})
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          pacboy: cc:p python:p python-setuptools:p python-sphinx:p
+      - name: Build
+        run: CC=cc python setup.py build
+      - name: Check
+        run: |
+          CC=cc python setup.py build_ext --inplace
+          python -c "import winkerberos;print(winkerberos.__version__)"
