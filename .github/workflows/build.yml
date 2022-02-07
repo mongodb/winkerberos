@@ -25,3 +25,14 @@ jobs:
         run: |
           CC=cc python setup.py build_ext --inplace
           python -c "import winkerberos;print(winkerberos.__version__)"
+  windows-msvc:
+    runs-on: windows-latest
+    name: Build MSVC
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: CC=cc python setup.py build
+      - name: Check
+        run: |
+          CC=cc python setup.py build_ext --inplace
+          python -c "import winkerberos;print(winkerberos.__version__)"
