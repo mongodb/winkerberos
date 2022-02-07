@@ -24,14 +24,17 @@ try:
 except ImportError:
     pass
 
-from distutils.command.build_ext import build_ext
-
 try:
     from setuptools import setup, Extension
 except ImportError:
     from ez_setup import use_setuptools
     use_setuptools()
     from setuptools import setup, Extension
+
+if sys.version_info[:2] < (3, 10):
+    from distutils.command.build_ext import build_ext
+else:
+    from setuptools.command.build_ext import build_ext
 
 try:
     import sphinx
@@ -105,7 +108,7 @@ else:
            ]
 setup(
     name="winkerberos",
-    version="0.8.0",
+    version="0.9.0.dev0",
     description="High level interface to SSPI for Kerberos client auth",
     long_description=readme,
     author="Bernie Hackett",

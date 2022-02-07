@@ -1223,7 +1223,7 @@ initwinkerberos(VOID)
                            PyCapsule_New(GSS_MECH_OID_SPNEGO, MECH_OID_SPNEGO_CAPSULE_NAME, NULL)) ||
         PyModule_AddObject(module,
                            "__version__",
-                           PyString_FromString("0.8.0"))) {
+                           PyString_FromString("0.9.0.dev0"))) {
         Py_DECREF(GSSError);
         Py_DECREF(KrbError);
         Py_DECREF(module);
