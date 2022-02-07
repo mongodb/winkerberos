@@ -21,3 +21,7 @@ jobs:
           pacboy: cc:p python:p python-setuptools:p python-sphinx:p
       - name: Build
         run: CC=cc python setup.py build
+      - name: Check
+        run: |
+          CC=cc python setup.py build_ext --inplace
+          python -c "import winkerberos;print(winkerberos.__version__)"
