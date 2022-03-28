@@ -746,7 +746,7 @@ sspi_client_step(PyObject* self, PyObject* args, PyObject* keywds) {
         return NULL;
     }
 
-    if (pychan_bindings != NULL) {
+    if (pychan_bindings != NULL && pychan_bindings != Py_None) {
         if (!PyCapsule_CheckExact(pychan_bindings)) {
             PyErr_SetString(PyExc_TypeError, "Expected a channel bindings object");
             return NULL;
