@@ -10,7 +10,7 @@ About
 A native Kerberos client implementation for Python on Windows. This module
 mimics the API of `pykerberos <https://pypi.python.org/pypi/pykerberos>`_ to
 implement Kerberos authentication with Microsoft's Security Support Provider
-Interface (SSPI). It supports Python 2.7 and 3.4+.
+Interface (SSPI). It supports Python 3.6+.
 
 Installation
 ============
@@ -29,11 +29,7 @@ Building and installing from source
 You must have the correct version of VC++ installed for your version of
 Python:
 
-- Python 2.7 - `Microsoft Visual C++ Compiler for Python 2.7`_
-- Python 3.4 - Visual Studio 2010 (Professional for 64bit)
-- Python 3.5+ - Visual Studio 2015 (Any version)
-
-.. _`Microsoft Visual C++ Compiler for Python 2.7`: https://www.microsoft.com/en-us/download/details.aspx?id=44266
+- Python 3.6+ - Visual Studio 2015 (Any version)
 
 Once you have the required compiler installed, run the following command from
 the root directory of the WinKerberos source::

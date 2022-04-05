@@ -102,7 +102,7 @@ class TestWinKerberos(unittest.TestCase):
             _PASSWORD)
         self.assertEqual(res, kerberos.AUTH_GSS_COMPLETE)
 
-        res = kerberos.authGSSClientStep(ctx, "")
+        res = kerberos.authGSSClientStep(ctx, "", channel_bindings=None)
         self.assertEqual(res, kerberos.AUTH_GSS_CONTINUE)
 
         payload = kerberos.authGSSClientResponse(ctx)
