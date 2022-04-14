@@ -10,7 +10,7 @@ About
 A native Kerberos client implementation for Python on Windows. This module
 mimics the API of `pykerberos <https://pypi.python.org/pypi/pykerberos>`_ to
 implement Kerberos authentication with Microsoft's Security Support Provider
-Interface (SSPI). It supports Python 2.7 or Python 3.5+.
+Interface (SSPI). It supports Python 2.7 and Python 3.5+.
 
 Installation
 ============
