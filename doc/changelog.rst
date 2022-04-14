@@ -9,7 +9,7 @@ packaging environment. Instead, check ``sys.version`` which is available in any
 python env.  Also remove ``SecPkgContext_Bindings`` definition which has been
 added in ``mingw-w64`` headers.
 - Allow ``channel_bindings=None`` for ``authGSSClientStep``.
-- WinKerberos now requires Python 2.7 or Python 3.5+.
+- WinKerberos now requires Python 2.7 or 3.5+.
 
 Changes in Version 0.8.0
 ------------------------
