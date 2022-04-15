@@ -15,9 +15,9 @@ jobs:
         buildplat: ["win_amd64", "win32"]
         python: ["cp35", "cp36", "cp37", "cp38", "cp39", "cp310"]
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v2
       - name: Build wheels
-        uses: pypa/cibuildwheelv
+        uses: pypa/cibuildwheel@v2.4.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat }}
           CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
