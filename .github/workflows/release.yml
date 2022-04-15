@@ -61,7 +61,7 @@ jobs:
 
   collect_wheels:
     runs-on: ubuntu-latest
-    needs: [build_wheels, make_sdist]
+    needs: [build_py3_wheels, build_py2_wheel, make_sdist]
     name: Download Wheels
     steps:
       - name: Download all workflow run artifacts
