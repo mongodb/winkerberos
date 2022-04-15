@@ -11,6 +11,7 @@ jobs:
         buildplat: ["win_amd64", "win32"]
         python: ["cp27", "cp35", "cp36", "cp37", "cp38", "cp39", "cp310"]
     steps:
+      - uses: actions/checkout@v2
       - name: Build wheels
         uses: pypa/cibuildwheel@v1.12.0
         env:
