@@ -3,7 +3,7 @@ name: Python Wheels
 on: [push, pull_request]
 
 concurrency:
-  group: wheels-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
