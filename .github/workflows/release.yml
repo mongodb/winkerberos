@@ -2,6 +2,10 @@ name: Python Wheels
 
 on: [push, pull_request]
 
+concurrency:
+  group: wheels-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_wheels:
     runs-on: windows-2019
