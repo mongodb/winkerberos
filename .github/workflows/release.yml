@@ -53,13 +53,13 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build SDist
         run: |
-          pip install build check-manifest
+          pip install check-manifest
           check-manifest -v
-          python -m build --sdist .
+          python setup.py sdist --formats=zip
       - uses: actions/upload-artifact@v2
         with:
           name: "sdist"
-          path: dist/*.tar.gz
+          path: dist/*.zip
 
   collect_wheels:
     runs-on: ubuntu-latest
