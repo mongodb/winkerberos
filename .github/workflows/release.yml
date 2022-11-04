@@ -13,11 +13,11 @@ jobs:
       fail-fast: false
       matrix:
         buildplat: ["win_amd64", "win32"]
-        python: ["cp36", "cp37", "cp38", "cp39", "cp310"]
+        python: ["cp36", "cp37", "cp38", "cp39", "cp310", "cp311"]
     steps:
       - uses: actions/checkout@v2
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.4.0
+        uses: pypa/cibuildwheel@v2.11.2
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat }}
           CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
