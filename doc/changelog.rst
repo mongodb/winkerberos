@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in Version 0.9.1
+------------------------
+
+- Add support for Python 3.11.
+
+
 Changes in Version 0.9.0
 ------------------------
 
