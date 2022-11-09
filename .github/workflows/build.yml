@@ -15,7 +15,7 @@ jobs:
        run: |
         cd doc
         pip install sphinx
-        make html SPHINXOPTS="-W"
+        cmd.exe /c 'make.bat html SPHINXOPTS="-W"'
 
   windows-msys2:
     runs-on: windows-latest
