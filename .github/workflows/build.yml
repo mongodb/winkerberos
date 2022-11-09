@@ -10,7 +10,8 @@ jobs:
     runs-on: windows-latest
     steps:
      - uses: actions/checkout@v2
-     - run: |
+     - shell: pwsh
+       run: |
         cd doc
         pip install sphinx
         make html SPHINXOPTS="-W"
