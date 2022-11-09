@@ -6,6 +6,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  docs:
+    runs-on: windows-latest
+    steps:
+     - uses: actions/checkout@v2
+     - uses: actions/setup-python@v3
+     - shell: pwsh
+       run: |
+        cd doc
+        pip install sphinx
+        cmd.exe /c 'make.bat html SPHINXOPTS="-W"'
+
   windows-msys2:
     runs-on: windows-latest
     strategy:

@@ -1,13 +1,19 @@
 Changelog
 =========
 
+Changes in Version 0.9.1
+------------------------
+
+- Add support for Python 3.11.
+
+
 Changes in Version 0.9.0
 ------------------------
 
 - Fix build in mingw-w64: ``MINGW_CHOST`` is specific to msys2 build and
-packaging environment. Instead, check ``sys.version`` which is available in any
-python env.  Also remove ``SecPkgContext_Bindings`` definition which has been
-added in ``mingw-w64`` headers.
+  packaging environment. Instead, check ``sys.version`` which is available in
+  any python env.  Also remove ``SecPkgContext_Bindings`` definition which has
+  been added in ``mingw-w64`` headers.
 - Allow ``channel_bindings=None`` for ``authGSSClientStep``.
 - WinKerberos now requires Python 2.7 or 3.5+.
 
