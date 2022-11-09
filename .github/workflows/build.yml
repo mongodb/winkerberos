@@ -6,6 +6,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  docs:
+    runs-on: windows-latest
+    steps:
+     - uses: actions/checkout@v2
+     - run: |
+        cd doc
+        pip install sphinx
+        make html SPHINXOPTS="-W"
+
   windows-msys2:
     runs-on: windows-latest
     strategy:
