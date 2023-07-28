@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import sys
 from setuptools import setup, Extension
 
@@ -23,6 +24,7 @@ if 'MSC' in sys.version:
            ]
 else:
     #mingw:
+    os.environ["CC"] = "cc"
     extra_link_args = ['-lcrypt32',
                         '-lsecur32',
                         '-lshlwapi']
