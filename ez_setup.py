@@ -13,6 +13,7 @@ the appropriate options to ``use_setuptools()``.
 
 This file can also be run as a script to install or upgrade setuptools.
 """
+import logging
 import os
 import shutil
 import sys
@@ -22,7 +23,8 @@ import optparse
 import subprocess
 import platform
 
-from distutils import log
+logging.basicConfig()
+log = logging.getLogger(__name__)
 
 try:
     from site import USER_SITE
