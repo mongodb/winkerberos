@@ -18,12 +18,8 @@
 
 #include <Shlwapi.h>
 
-#if PY_MAJOR_VERSION >= 3
 #define PyInt_FromLong PyLong_FromLong
 #define PyString_FromString PyUnicode_FromString
-#else
-#define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
-#endif
 
 #define MECH_OID_KRB5_CAPSULE_NAME "winkerberos.GSS_MECH_OID_KRB5"
 #define MECH_OID_SPNEGO_CAPSULE_NAME "winkerberos.GSS_MECH_OID_SPNEGO"

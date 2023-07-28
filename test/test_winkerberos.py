@@ -30,9 +30,6 @@ try:
 except ImportError:
     _HAVE_PYMONGO = False
 
-_PY3 = sys.version_info[0] >= 3
-
-# NOTE: Testing with non-ascii values will only work with python 3.x.
 _HOST = os.environ.get('MONGODB_HOST', 'localhost')
 _PORT = int(os.environ.get('MONGODB_PORT', 27017))
 _SPN = os.environ.get('KERBEROS_SERVICE')
@@ -227,20 +224,19 @@ class TestWinKerberos(unittest.TestCase):
                           u"foo",
                           u"fo\0")
 
-        if _PY3:
-            self.assertRaises(TypeError,
-                              kerberos.authGSSClientInit,
-                              "foo",
-                              "foo",
-                              0,
-                              b"foo")
-            self.assertRaises(TypeError,
-                              kerberos.authGSSClientInit,
-                              "foo",
-                              "foo",
-                              0,
-                              "foo",
-                              b"foo")
+        self.assertRaises(TypeError,
+                          kerberos.authGSSClientInit,
+                          "foo",
+                          "foo",
+                          0,
+                          b"foo")
+        self.assertRaises(TypeError,
+                          kerberos.authGSSClientInit,
+                          "foo",
+                          "foo",
+                          0,
+                          "foo",
+                          b"foo")
 
     def test_password_buffer(self):
         password = bytearray(_PASSWORD, "utf8")
@@ -254,24 +250,21 @@ class TestWinKerberos(unittest.TestCase):
         except kerberos.GSSError as exc:
             self.fail("Failed memoryview: {}".format(str(exc)))
 
-        # mmap.mmap and array.array only expose the
-        # buffer interface in python 3.x
-        if _PY3:
-            mm = mmap.mmap(-1, len(password))
-            mm.write(_PASSWORD.encode("utf8"))
-            mm.seek(0)
-            try:
-                self.authenticate(password=mm)
-            except kerberos.GSSError as exc:
-                self.fail("Failed map.map: {}".format(str(exc)))
+        mm = mmap.mmap(-1, len(password))
+        mm.write(_PASSWORD.encode("utf8"))
+        mm.seek(0)
+        try:
+            self.authenticate(password=mm)
+        except kerberos.GSSError as exc:
+            self.fail("Failed map.map: {}".format(str(exc)))
 
-            # Note that only ascii and utf8 strings are supported, so
-            # 'u' with a unicode object won't work. Unicode objects
-            # must be encoded utf8 first.
-            try:
-                self.authenticate(password=array.array('b', password))
-            except kerberos.GSSError as exc:
-                self.fail("Failed array.array: {}".format(str(exc)))
+        # Note that only ascii and utf8 strings are supported, so
+        # 'u' with a unicode object won't work. Unicode objects
+        # must be encoded utf8 first.
+        try:
+            self.authenticate(password=array.array('b', password))
+        except kerberos.GSSError as exc:
+            self.fail("Failed array.array: {}".format(str(exc)))
 
     def test_principal(self):
         if _PRINCIPAL is None:

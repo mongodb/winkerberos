@@ -15,15 +15,6 @@
 import os
 import sys
 
-if sys.version_info[:2] < (2, 7):
-    raise RuntimeError("Python version >= 2.7 required.")
-
-# http://bugs.python.org/issue15881
-try:
-    import multiprocessing
-except ImportError:
-    pass
-
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -117,22 +108,19 @@ setup(
     tests_require=tests_require,
     platforms="Windows",
     license="Apache License, Version 2.0",
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+    python_requires=">=3.7",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: Microsoft :: Windows",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: System :: Systems Administration :: Authentication/Directory"],
     ext_modules = [

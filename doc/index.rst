@@ -32,14 +32,11 @@ Building and installing from source
 You must have the correct version of VC++ installed for your version of
 Python:
 
-- Python 3.5+ - Visual Studio 2015+ (Any version)
-- Python 2.7 - `Microsoft Visual C++ Compiler for Python 2.7`_
-
-.. _`Microsoft Visual C++ Compiler for Python 2.7`: https://www.microsoft.com/en-us/download/details.aspx?id=44266
+- Python 3.7+ - Visual Studio 2015+ (Any version)
 
 Once you have the required compiler installed, just run the following command::
 
-    python setup.py install
+    python -m pip install .
 
 Examples
 --------
