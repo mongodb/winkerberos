@@ -34,7 +34,7 @@ Python:
 Once you have the required compiler installed, run the following command from
 the root directory of the WinKerberos source::
 
-    python setup.py install
+    pip install .
 
 Building HTML documentation
 ===========================
@@ -46,6 +46,7 @@ First install `Sphinx <https://pypi.python.org/pypi/Sphinx>`_::
 Then run the following command from the root directory of the WinKerberos
 source::
 
+    pip install -e .
     python -m sphinx -b html doc doc/_build
 
 
