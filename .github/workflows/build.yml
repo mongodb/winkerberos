@@ -14,6 +14,7 @@ jobs:
      - shell: pwsh
        run: |
         pip install sphinx
+        pip install -e .
         python -m sphinx -b html -W doc doc/_build
 
   windows-msys2:
