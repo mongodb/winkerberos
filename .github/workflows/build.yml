@@ -34,12 +34,11 @@ jobs:
           msystem: ${{ matrix.msystem }}
           update: true
           pacboy: cc:p python:p python-setuptools:p python-sphinx:p
-      - name: Build
-        run: CC=cc python setup.py build
       - name: Check
         run: |
-          CC=cc python setup.py build_ext --inplace
+          CC=cc pip install -e .
           python -c "import winkerberos;print(winkerberos.__version__)"
+
   windows-msvc:
     runs-on: windows-latest
     name: Build MSVC
