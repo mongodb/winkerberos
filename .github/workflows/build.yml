@@ -54,9 +54,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - name: Build
-        run: python setup.py build
       - name: Check
         run: |
-          python setup.py build_ext --inplace
+          pip install -e .
           python -c "import winkerberos;print(winkerberos.__version__)"
