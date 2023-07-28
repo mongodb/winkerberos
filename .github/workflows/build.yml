@@ -36,7 +36,8 @@ jobs:
           pacboy: cc:p python:p python-setuptools:p python-sphinx:p python-pip:p
       - name: Check
         run: |
-          CC=cc pip install -e .
+          export CC=cc
+          pip install -e .
           python -c "import winkerberos;print(winkerberos.__version__)"
 
   windows-msvc:
