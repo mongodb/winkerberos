@@ -20,6 +20,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.11.2
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat }}
+          CIBW_PRERELEASE_PYTHONS: "True"
           CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
 
       - uses: actions/upload-artifact@v3
