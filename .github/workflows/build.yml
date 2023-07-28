@@ -13,9 +13,7 @@ jobs:
      - uses: actions/setup-python@v3
      - shell: pwsh
        run: |
-        cd doc
-        pip install sphinx
-        cmd.exe /c 'make.bat html SPHINXOPTS="-W"'
+        SPHINXOPTS="-W"' python -m sphinx -b html doc doc/_build
 
   windows-msys2:
     runs-on: windows-latest
