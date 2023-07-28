@@ -46,7 +46,8 @@ First install `Sphinx <https://pypi.python.org/pypi/Sphinx>`_::
 Then run the following command from the root directory of the WinKerberos
 source::
 
-    python setup.py doc
+    cd doc
+    cmd.exe /c 'make.bat html SPHINXOPTS="-W"'
 
 Examples
 ========
