@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import sys
 from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
 
 
 if 'MSC' in sys.version:
@@ -30,14 +28,6 @@ else:
                         '-lshlwapi']
 
 
-class custom_build_ext(build_ext):
-
-    def finalize_options(self) -> None:
-        super().finalize_options()
-        if 'MSC' not in sys.version:
-            self.compiler = 'cc'
-
-
 setup(
     ext_modules = [
         Extension(
@@ -48,7 +38,6 @@ setup(
                 "src/kerberos_sspi.c"
             ],
         )
-    ],
-    cmdclass={"build_ext": custom_build_ext}
+    ]
 )
 
