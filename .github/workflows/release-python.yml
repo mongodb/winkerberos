@@ -23,7 +23,7 @@ jobs:
         buildplat: ["win_amd64", "win32"]
         python: ["cp37", "cp38", "cp39", "cp310", "cp311", "cp312"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.14.1
         env:
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: "sdist"
-          path: dist/*.zip
+          path: dist/*.tar.gz
 
   collect_dist:
     runs-on: ubuntu-latest
