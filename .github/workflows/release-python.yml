@@ -40,13 +40,20 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          # Build sdist on lowest supported Python
+          python-version: '3.7'
+
       - name: Build SDist
         run: |
-          pip install check-manifest
+          pip install check-manifest build
           check-manifest -v
-          python setup.py sdist --formats=zip
-      - uses: actions/upload-artifact@v2
+          python -m build --sdist .
+
+      - uses: actions/upload-artifact@v3
         with:
           name: "sdist"
           path: dist/*.zip
