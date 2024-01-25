@@ -23,7 +23,7 @@ jobs:
         buildplat: ["win_amd64", "win32"]
         python: ["cp37", "cp38", "cp39", "cp310", "cp311", "cp312"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.14.1
         env:
@@ -40,16 +40,23 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          # Build sdist on lowest supported Python
+          python-version: '3.7'
+
       - name: Build SDist
         run: |
-          pip install check-manifest
+          pip install check-manifest build
           check-manifest -v
-          python setup.py sdist --formats=zip
-      - uses: actions/upload-artifact@v2
+          python -m build --sdist .
+
+      - uses: actions/upload-artifact@v3
         with:
           name: "sdist"
-          path: dist/*.zip
+          path: dist/*.tar.gz
 
   collect_dist:
     runs-on: ubuntu-latest
