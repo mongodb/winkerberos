@@ -82,11 +82,6 @@ repos:
     stages: [manual]
     args: ["--no-strict-imports"]
 
-- repo: https://github.com/cpp-linter/cpp-linter-hooks
-  rev: v0.4.0
-  hooks:
-    - id: clang-tidy
-
 - repo: https://github.com/codespell-project/codespell
   rev: "v2.2.6"
   hooks:
