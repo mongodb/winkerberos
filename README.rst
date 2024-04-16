@@ -60,20 +60,21 @@ following RFC-4752, section 3.1:
 
     import winkerberos as kerberos
 
+
     def send_response_and_receive_challenge(response):
         # Your server communication code here...
         pass
+
 
     def authenticate_kerberos(service, user, channel_bindings=None):
         # Initialize the context object with a service principal.
         status, ctx = kerberos.authGSSClientInit(service)
 
         # GSSAPI is a "client goes first" SASL mechanism. Send the
-        # first "response" to the server and recieve its first
+        # first "response" to the server and receive its first
         # challenge.
         if channel_bindings is not None:
-            status = kerberos.authGSSClientStep(
-                ctx, "", channel_bindings=channel_bindings)
+            status = kerberos.authGSSClientStep(ctx, "", channel_bindings=channel_bindings)
         else:
             status = kerberos.authGSSClientStep(ctx, "")
         response = kerberos.authGSSClientResponse(ctx)
@@ -84,11 +85,12 @@ following RFC-4752, section 3.1:
         while status == kerberos.AUTH_GSS_CONTINUE:
             if channel_bindings is not None:
                 status = kerberos.authGSSClientStep(
-                    ctx, challenge, channel_bindings=channel_bindings)
+                    ctx, challenge, channel_bindings=channel_bindings
+                )
             else:
                 status = kerberos.authGSSClientStep(ctx, challenge)
 
-            response = kerberos.authGSSClientResponse(ctx) or ''
+            response = kerberos.authGSSClientResponse(ctx) or ""
             challenge = send_response_and_receive_challenge(response)
 
         # Decrypt the server's last challenge
@@ -111,11 +113,12 @@ hash algorithm choice:
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes
 
+
     def channel_bindings(ssl_socket):
         server_certificate = ssl_socket.getpeercert(True)
         cert = x509.load_der_x509_certificate(server_certificate, default_backend())
         hash_algorithm = cert.signature_hash_algorithm
-        if hash_algorithm.name in ('md5', 'sha1'):
+        if hash_algorithm.name in ("md5", "sha1"):
             digest = hashes.Hash(hashes.SHA256(), default_backend())
         else:
             digest = hashes.Hash(hash_algorithm, default_backend())
@@ -131,8 +134,7 @@ Viewing API Documentation without Sphinx
 
 Use the help function in the python interactive shell:
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> import winkerberos
     >>> help(winkerberos)
-

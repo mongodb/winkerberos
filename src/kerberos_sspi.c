@@ -68,7 +68,7 @@ destroy_sspi_server_state(sspi_server_state* state) {
 
 VOID
 set_gsserror(DWORD errCode, const SEC_CHAR* msg) {
-    SEC_CHAR* err;
+    SEC_CHAR* err = NULL;
     DWORD status;
     DWORD flags = (FORMAT_MESSAGE_ALLOCATE_BUFFER |
                    FORMAT_MESSAGE_FROM_SYSTEM |
@@ -234,7 +234,7 @@ auth_sspi_client_init(WCHAR* service,
         authIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
     }
 
-    /* Note that the first paramater, pszPrincipal, appears to be
+    /* Note that the first parameter, pszPrincipal, appears to be
      * completely ignored in the Kerberos SSP. For more details see
      * https://github.com/mongodb-labs/winkerberos/issues/11.
      * */
@@ -287,7 +287,7 @@ auth_sspi_server_init(WCHAR* service, sspi_server_state* state) {
         }
     }
 
-    /* Note that the first paramater, pszPrincipal, appears to be
+    /* Note that the first parameter, pszPrincipal, appears to be
     * completely ignored in the Kerberos SSP. For more details see
     * https://github.com/mongodb-labs/winkerberos/issues/11.
     * */
@@ -722,4 +722,3 @@ auth_sspi_client_wrap(sspi_client_state* state,
     free(outbuf);
     return status;
 }
-

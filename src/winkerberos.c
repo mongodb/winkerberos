@@ -581,7 +581,7 @@ PyDoc_STRVAR(sspi_channel_bindings_doc,
 "  - `acceptor_addrtype`: Optional int specifying the acceptor address type.\n"
 "    Defaults to :data:`GSS_C_AF_UNSPEC`.\n"
 "  - `acceptor_address`: Optional byte string containing the acceptor address.\n"
-"  - `application_data`: Optional byte string contining the application data.\n"
+"  - `application_data`: Optional byte string containing the application data.\n"
 "    An example of this would be 'tls-server-end-point:{cert-hash}' where\n"
 "    {cert-hash} is the hash of the server's certificate.\n"
 "\n"
@@ -1168,7 +1168,7 @@ initwinkerberos(VOID)
         INITERROR;
     }
     Py_INCREF(KrbError);
-    
+
     GSSError = PyErr_NewException(
         "winkerberos.GSSError", KrbError, NULL);
     if (GSSError == NULL) {

@@ -32,4 +32,3 @@
    .. data:: GSS_MECH_OID_KRB5
    .. data:: GSS_MECH_OID_SPNEGO
    .. data:: __version__
-
