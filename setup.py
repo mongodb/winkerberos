@@ -16,28 +16,26 @@ import sys
 from setuptools import setup, Extension
 
 
-if 'MSC' in sys.version:
-    #msvc:
-    extra_link_args = ['crypt32.lib', 'secur32.lib', 'Shlwapi.lib',
-           '/NXCOMPAT', '/DYNAMICBASE',
-           ]
+if "MSC" in sys.version:
+    # msvc:
+    extra_link_args = [
+        "crypt32.lib",
+        "secur32.lib",
+        "Shlwapi.lib",
+        "/NXCOMPAT",
+        "/DYNAMICBASE",
+    ]
 else:
-    #mingw:
-    extra_link_args = ['-lcrypt32',
-                        '-lsecur32',
-                        '-lshlwapi']
+    # mingw:
+    extra_link_args = ["-lcrypt32", "-lsecur32", "-lshlwapi"]
 
 
 setup(
-    ext_modules = [
+    ext_modules=[
         Extension(
             "winkerberos",
             extra_link_args=extra_link_args,
-            sources = [
-                "src/winkerberos.c",
-                "src/kerberos_sspi.c"
-            ],
+            sources=["src/winkerberos.c", "src/kerberos_sspi.c"],
         )
     ]
 )
-

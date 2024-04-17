@@ -34,7 +34,7 @@ Changes in Version 0.8.0
 
 *Backward Breaking Changes*
 
-- `authGSSClientUsername` has been renamed
+- ``authGSSClientUsername`` has been renamed
   :func:`winkerberos.authGSSClientUserName` to match ccs-pykerberos.
 - WinKerberos no longer supports Python 2.6 or Python 3.3.
 
@@ -49,19 +49,19 @@ Changes in Version 0.7.0
 Changes in Version 0.6.0
 ------------------------
 
-- Added the `mech_oid` parameter to :func:`~winkerberos.authGSSClientInit`.
+- Added the ``mech_oid`` parameter to :func:`~winkerberos.authGSSClientInit`.
   Thanks go to Alexey Veklov for the patch.
 
 Changes in Version 0.5.0
 ------------------------
 
-- Added :func:`~winkerberos.authGSSClientResponseConf` and the `protect`
+- Added :func:`~winkerberos.authGSSClientResponseConf` and the ``protect``
   parameter to :func:`~winkerberos.authGSSClientWrap`.
-- Fixed support for the `principal` parameter of
+- Fixed support for the ``principal`` parameter of
   :func:`~winkerberos.authGSSClientInit`, which had no effect in previous
   versions.
-- Deprecated the :func:`~winkerberos.authGSSClientInit` parameters `user`,
-  `domain`, and `password`.
+- Deprecated the :func:`~winkerberos.authGSSClientInit` parameters ``user``,
+  ``domain``, and ``password``.
 - Various improvements to Sphinx documentation builds.
 
 Changes in Version 0.4.0
@@ -81,7 +81,7 @@ Changes in Version 0.3.0
 Changes in Version 0.2.0
 ------------------------
 
-- The `password` parameter of :func:`~winkerberos.authGSSClientInit` can be a
+- The ``password`` parameter of :func:`~winkerberos.authGSSClientInit` can be a
   :class:`bytearray` or any other 8-bit string type that implements the buffer
   interface.
 - Fixed an issue where :func:`~winkerberos.authGSSClientUsername` could raise
