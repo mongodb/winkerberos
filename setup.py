@@ -29,6 +29,7 @@ else:
     # mingw:
     extra_link_args = ["-lcrypt32", "-lsecur32", "-lshlwapi"]
 
+
 def parse_reqs_file(fname):
     with open(fname) as fid:  # noqa:PTH123
         lines = [li.strip() for li in fid.readlines()]
@@ -43,5 +44,5 @@ setup(
             extra_link_args=extra_link_args,
             sources=["src/winkerberos.c", "src/kerberos_sspi.c"],
         )
-    ]
+    ],
 )
