@@ -30,12 +30,19 @@ else:
     extra_link_args = ["-lcrypt32", "-lsecur32", "-lshlwapi"]
 
 
+def parse_reqs_file(fname):
+    with open(fname) as fid:  # noqa:PTH123
+        lines = [li.strip() for li in fid.readlines()]
+    return [li for li in lines if li and not li.startswith("#")]
+
+
 setup(
+    install_requires=parse_reqs_file("requirements.txt"),
     ext_modules=[
         Extension(
             "winkerberos",
             extra_link_args=extra_link_args,
             sources=["src/winkerberos.c", "src/kerberos_sspi.c"],
         )
-    ]
+    ],
 )

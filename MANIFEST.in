@@ -1,6 +1,6 @@
 include README.rst
 include LICENSE
-include ez_setup.py
+include requirements.txt
 recursive-include doc *.bat
 recursive-include doc *.py
 recursive-include doc *.rst
