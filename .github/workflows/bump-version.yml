@@ -25,8 +25,9 @@ jobs:
 
       - name: Set up Git Config
         run: |
-          git config user.email "packaging@mongodb.com"
-          git config user.name "MongoDB Python Driver"
+          # Use the GitHub Actions bot as the actor.
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
 
       - name: Create the envfile
         run: |
