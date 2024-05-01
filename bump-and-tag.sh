@@ -9,16 +9,16 @@ echo "Running bump, tag, and bump..."
 set -x
 
 # Bump
-perl -pi -e "s/version = \"$CURRENT_VERSION\"/version = \"$NEXT_VERSION\"/" pyproject.toml
+perl -pi -e "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
 git add .
-git commit -a -m "BUMP ${NEXT_VERSION}" -s --gpg-sign=${GPG_KEY_ID}
+git commit -a -m "BUMP $$NEW_VERSION}" -s --gpg-sign=${GPG_KEY_ID}
 
 # Tag
-git tag -a "${NEXT_VERSION}" -m "BUMP ${NEXT_VERSION}" -s --local-user=${GPG_KEY_ID}
-git show --no-patch "${NEXT_VERSION}"
+git tag -a "$$NEW_VERSION}" -m "BUMP $$NEW_VERSION}" -s --local-user=${GPG_KEY_ID}
+git show --no-patch "$$NEW_VERSION}"
 
 # Bump
-perl -pi -e "s/version = \"$NEXT_VERSION\"/version = \"$POST_VERSION\"/" pyproject.toml
+perl -pi -e "s/version = \"$NEW_VERSION\"/version = \"$POST_VERSION\"/" pyproject.toml
 git add .
 git commit -a -m "BUMP ${POST_VERSION}" -s --gpg-sign=${GPG_KEY_ID}
 
