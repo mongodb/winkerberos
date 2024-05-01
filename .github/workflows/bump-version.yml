@@ -64,5 +64,6 @@ jobs:
 
       - name: Push the version and tags to the source branch
         run: |
-          git push origin --tags
-          git push origin
+          echo "TODO: uncomment after verifying the rest of the workflow works and we're ready to start using the automation"
+          # git push origin --tags
+          # git push origin
