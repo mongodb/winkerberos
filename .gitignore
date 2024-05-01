@@ -10,3 +10,5 @@ doc/_build/
 .eggs/
 winkerberos.egg-info/
 .idea
+envfile
+.venv
