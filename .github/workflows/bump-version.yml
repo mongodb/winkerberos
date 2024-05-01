@@ -67,11 +67,13 @@ jobs:
           curl -O https://pgp.mongodb.com/python-driver.pub
           gpg --import python-driver.pub
           git verify-tag ${{inputs.version}}
+          rm python-driver.pub
 
       - name: Push the version and tags to the source branch
         run: |
-          echo "TODO: uncomment after verifying the rest of the workflow works and we're ready to start using the automation"
-          git status
-          git remote -v
-          # git push origin --tags
-          # git push origin
+          if [ -z "$(git status --porcelain)" ]; then
+            git status
+            exit 1
+          fi
+          git push origin --tags
+          git push origin
