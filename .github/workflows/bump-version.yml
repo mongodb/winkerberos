@@ -55,7 +55,7 @@ jobs:
             -w $(pwd) \
             ${{ vars.ARTIFACTORY_IMAGE }} \
             /bin/bash -c "$(pwd)/bump-and-tag.sh"
-      
+
       - name: Verify the tag
         run: |
           curl -O https://pgp.mongodb.com/python-driver.pub
