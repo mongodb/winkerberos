@@ -60,7 +60,7 @@ jobs:
             -v $(pwd):$(pwd) \
             -w $(pwd) \
             ${{ vars.ARTIFACTORY_IMAGE }} \
-            /bin/bash -c "$(pwd)/bump-and-tag.sh"
+            /bin/bash -c "$(pwd)/scripts/bump-and-tag.sh"
 
       - name: Verify the tag
         run: |
