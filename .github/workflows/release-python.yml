@@ -21,19 +21,28 @@ jobs:
       fail-fast: false
       matrix:
         buildplat: ["win_amd64", "win32"]
-        python: ["cp37", "cp38", "cp39", "cp310", "cp311", "cp312"]
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.17.0
         env:
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat }}
+          CIBW_BUILD: "cp3*-${{ matrix.buildplat }}"
           CIBW_PRERELEASE_PYTHONS: "True"
           CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
 
+      - name: Assert all versions in wheelhouse
+        if: ${{ ! startsWith(matrix.buildplat[1], 'macos') }}
+        run: |
+          ls wheelhouse/*cp37*.whl
+          ls wheelhouse/*cp38*.whl
+          ls wheelhouse/*cp39*.whl
+          ls wheelhouse/*cp310*.whl
+          ls wheelhouse/*cp311*.whl
+          ls wheelhouse/*cp312*.whl
+
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.python }}-${{ matrix.buildplat }}
+          name: wheel-${{ matrix.buildplat }}
           path: ./wheelhouse/*.whl
 
   make_sdist:
@@ -72,7 +81,7 @@ jobs:
           find . -type d -empty -delete
       - uses: actions/upload-artifact@v3
         with:
-          name: all-dist-${{ github.head_ref || github.ref_name }}
+          name: all-dist-${{ github.run_id }}
           path: "./*"
 
   publish:
@@ -89,7 +98,7 @@ jobs:
     - name: Download all the dists
       uses: actions/download-artifact@v3
       with:
-        name: all-dist-${{ github.head_ref || github.ref_name }}
+        name: all-dist-${{ github.run_id }}
         path: dist/
     - name: Create the envfile
       run: |
