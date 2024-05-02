@@ -85,6 +85,7 @@ jobs:
       id-token: write
       contents: write
     steps:
+    - uses: actions/checkout@v4
     - name: Download all the dists
       uses: actions/download-artifact@v3
       with:
