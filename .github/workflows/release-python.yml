@@ -97,7 +97,6 @@ jobs:
         cat << EOF > envfile
         GRS_CONFIG_USER1_USERNAME=${{ secrets.GRS_CONFIG_USER1_USERNAME }}
         GRS_CONFIG_USER1_PASSWORD=${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
-        GPG_KEY_ID=${{ vars.GPG_KEY_ID }}
         EOF
     - name: Log in to artifactory
       uses: redhat-actions/podman-login@v1
