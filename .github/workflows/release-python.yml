@@ -90,8 +90,6 @@ jobs:
       with:
         name: all-dist-${{ github.head_ref || github.ref_name }}
         path: dist/
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
     - name: Create the envfile
       run: |
         cat << EOF > envfile
@@ -118,4 +116,6 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }} --notes ""
-        gh release upload ${{ github.ref_name }} dist/*.sig
+        gh release upload ${{ github.ref_name }} signatures/*.sig
+    - name: Publish distribution 📦 to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1

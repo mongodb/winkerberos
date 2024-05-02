@@ -5,7 +5,11 @@ gpgloader
 
 gpg --list-keys
 
-for filename in dist/*; do
+rm -rf signatures
+mkdir signatures
+cd dist
+
+for filename in *; do
     echo "${filename}"
-    gpg --yes -v --armor -o "$filename.sig" --detach-sign "$filename"
+    gpg --yes -v --armor -o "../signatures/$filename.sig" --detach-sign "$filename"
 done
