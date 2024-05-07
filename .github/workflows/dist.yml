@@ -1,4 +1,4 @@
-name: Python Dist Files
+name: Dist
 
 on:
   push:
@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build_wheels:
+    name: "Build Wheels ${{ matrix.buildplat }}"
     runs-on: windows-2019
     strategy:
       fail-fast: false
