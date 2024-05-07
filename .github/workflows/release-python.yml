@@ -49,7 +49,7 @@ jobs:
           path: dist/
       - name: Get the list of dist files to sign
         run: |
-          export dist_files=$(ls dist)
+          export dist_files=$(ls dist/*)
           echo "DIST_FILES=\"${dist_files}\"" >> $GITHUB_ENV
       - uses: mongodb-labs/drivers-github-tools/garasign/ggp-sign@main
         with:
