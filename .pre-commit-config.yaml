@@ -67,9 +67,8 @@ repos:
   rev: 0.28.3
   hooks:
     - id: check-github-workflows
-      args: ["--verbose"]
     - id: check-github-actions
-      args: ["--verbose"]
+    - id: check-dependabot
 
 - repo: https://github.com/ariebovenberg/slotscheck
   rev: v0.17.0
