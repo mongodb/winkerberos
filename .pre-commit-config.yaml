@@ -64,14 +64,12 @@ repos:
       stages: [manual]
 
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.27.0
+  rev: 0.28.3
   hooks:
-    - id: check-jsonschema
-      name: "Check GitHub Workflows"
-      files: ^\.github/workflows/
-      types: [yaml]
-      args: ["--schemafile", "https://json.schemastore.org/github-workflow"]
-      stages: [manual]
+    - id: check-github-workflows
+      args: ["--verbose"]
+    - id: check-github-actions
+      args: ["--verbose"]
 
 - repo: https://github.com/ariebovenberg/slotscheck
   rev: v0.17.0
