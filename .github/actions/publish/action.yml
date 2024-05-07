@@ -1,0 +1,55 @@
+
+name: Publish
+description: "Asset Publish Action"
+inputs:
+  garasign_username:
+    description: "The garasign username"
+  garasign_password:
+    description: "The garasign password"
+  artifactory_username:
+    description: "The artifactory username"
+  artifactory_password:
+    description: "The artifactory password"
+  token:
+    description: "The GitHub access token"
+  dry_run:
+    description: "Whether this is a dry run"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+    - name: Download all the dists
+      uses: actions/download-artifact@v3
+      with:
+        name: all-dist-${{ github.run_id }}
+        path: dist/
+    - name: Get the list of dist files to sign
+      shell: bash
+      run: |
+        export dist_files=$(ls dist/*)
+        echo "DIST_FILES=\"${dist_files}\"" >> $GITHUB_ENV
+    - uses: mongodb-labs/drivers-github-tools/garasign/ggp-sign@main
+      with:
+        garasign_username: ${{ inputs.garasign_username }}
+        garasign_password: ${{ inputs.garasign_password }}
+        artifactory_username: ${{ inputs.artifactory_user }}
+        artifactory_password: ${{ inputs.artifactory_password }}
+        filenames: ${{ env.DIST_FILES }}
+    - name: Move the signature files to a separate directory
+      shell: bash
+      run: |
+          mkdir signatures
+          mv dist/*.sig signatures
+    - name: Create a draft release with release files
+      shell: bash
+      if: inputs.dry_run == 'false'
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }} --notes ""
+        gh release upload ${{ github.ref_name }} signatures/*.sig
+    # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#publishing-the-distribution-to-pypi
+    - name: Publish distribution 📦 to PyPI
+      if: inputs.dry_run == 'false'
+      uses: pypa/gh-action-pypi-publish@release/v1

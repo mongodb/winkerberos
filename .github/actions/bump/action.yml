@@ -58,8 +58,8 @@ runs:
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
       command: git commit -a -m "BUMP ${{ inputs.version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
-      garasign_username: ${{ inputs.grs_username }}
-      garasign_password: ${{ inputs.grs_password }}
+      garasign_username: ${{ inputs.garasign_username }}
+      garasign_password: ${{ inputs.garasign_password }}
       artifactory_username: ${{ inputs.art_user }}
       artifactory_password: ${{ inputs.art_password }}
 
@@ -67,10 +67,10 @@ runs:
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
       command: git tag -a "${{ inputs.version }}" -m "BUMP ${{ inputs.version }}" -s --local-user=${{ inputs.gpg_key_id }}
-      garasign_username: ${{ inputs.grs_username }}
-      garasign_password: ${{ inputs.grs_password }}
-      artifactory_username: ${{ inputs.art_user }}
-      artifactory_password: ${{ inputs.art_password }}
+      garasign_username: ${{ inputs.garasign_username }}
+      garasign_password: ${{ inputs.garasign_password }}
+      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_password: ${{ inputs.artifactory_password }}
       skip_setup: true
 
   - name: Set up the post version
@@ -85,10 +85,10 @@ runs:
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
       command: git commit -a -m "BUMP ${{ inputs.post_verion }}" -s --gpg-sign=${{ inputs.gpg_key_id }}"
-      garasign_username: ${{ inputs.grs_username }}
-      garasign_password: ${{ inputs.grs_password }}
-      artifactory_username: ${{ inputs.art_user }}
-      artifactory_password: ${{ inputs.art_password }}
+      garasign_username: ${{ inputs.garasign_username }}
+      garasign_password: ${{ inputs.garasign_password }}
+      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_password: ${{ inputs.artifactory_password }}
       skip_setup: true
 
   - name: Verify the tag
