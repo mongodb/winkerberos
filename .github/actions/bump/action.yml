@@ -9,18 +9,16 @@ inputs:
     description: "The app id of the bot"
   private_key:
     description: "The private key of the bot"
-  grs_username:
+  garasign_username:
     description: "The garasign username"
-  grs_password:
+  garasign_password:
     description: "The garasign password"
+  artifactory_username:
+    description: "The artifactory username"
+  artifactory_password:
+    description: "The artifactory password"
   gpg_key_id:
     description: "The gpg key id"
-  art_user:
-    description: "The artifactory username"
-  art_password:
-    description: "The artifactory password"
-  art_image:
-    description: "The artifactory image"
   dry_run:
     description: "Whether this is a dry run"
 
@@ -48,36 +46,50 @@ runs:
       git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       git config user.name "github-actions[bot]"
 
-  - name: Create the envfile
+  - name: Set up new version
     shell: bash
     run: |
-      pip install -U -q setuptools
-      cat << EOF > envfile
-      CURRENT_VERSION=$(python setup.py --version)
-      NEW_VERSION=${{inputs.version}}
-      POST_VERSION=${{inputs.post_version}}
-      GRS_CONFIG_USER1_USERNAME=${{ inputs.grs_username }}
-      GRS_CONFIG_USER1_PASSWORD=${{ inputs.grs_password }}
-      GPG_KEY_ID=${{ inputs.gpg_key_id }}
-      EOF
+      export CURRENT_VERSION=$(python setup.py --version)
+      export NEW_VERSION=${{inputs.version}}
+      sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
+      git add .
 
-  - name: Log in to artifactory
-    uses: redhat-actions/podman-login@v1
+  - name: Commit the new version
+    uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      username: ${{ inputs.art_user }}
-      password: ${{ inputs.art_password }}
-      registry: artifactory.corp.mongodb.com
+      command: git commit -a -m "BUMP ${{ inputs.version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
+      garasign_username: ${{ inputs.grs_username }}
+      garasign_password: ${{ inputs.grs_password }}
+      artifactory_username: ${{ inputs.art_user }}
+      artifactory_password: ${{ inputs.art_password }}
 
-  - name: Bump and tag in a container
+  - name: Tag the new version
+    uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
+    with:
+      command: git tag -a "${{ inputs.version }}" -m "BUMP ${{ inputs.version }}" -s --local-user=${{ inputs.gpg_key_id }}
+      garasign_username: ${{ inputs.grs_username }}
+      garasign_password: ${{ inputs.grs_password }}
+      artifactory_username: ${{ inputs.art_user }}
+      artifactory_password: ${{ inputs.art_password }}
+      skip_setup: true
+
+  - name: Set up the post version
     shell: bash
     run: |
-      podman run \
-        --env-file=envfile \
-        --rm \
-        -v $(pwd):$(pwd) \
-        -w $(pwd) \
-        ${{ inputs.art_image }} \
-        /bin/bash -c "$(pwd)/scripts/bump-and-tag.sh"
+      export CURRENT_VERSION=${{ inputs.version }}
+      export NEW_VERSION=${{ inputs.post_verion }}
+      sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
+      git add .
+
+  - name: Commit the post version
+    uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
+    with:
+      command: git commit -a -m "BUMP ${{ inputs.post_verion }}" -s --gpg-sign=${{ inputs.gpg_key_id }}"
+      garasign_username: ${{ inputs.grs_username }}
+      garasign_password: ${{ inputs.grs_password }}
+      artifactory_username: ${{ inputs.art_user }}
+      artifactory_password: ${{ inputs.art_password }}
+      skip_setup: true
 
   - name: Verify the tag
     shell: bash
