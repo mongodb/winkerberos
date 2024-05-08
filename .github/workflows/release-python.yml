@@ -1,131 +1,51 @@
-name: Python Wheels
+name: Release
 
 on:
-  push:
-    tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+.post[0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+[a-b][0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
   workflow_dispatch:
-  pull_request:
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      version:
+        description: "The next version to set"
+      post_version:
+        description: "The post version to set"
+      dry_run:
+        description: "Whether this is a dry run"
+        default: "false"
 
 jobs:
-  build_wheels:
+  bump-and-tag:
+    environment: release
     runs-on: windows-2019
-    strategy:
-      fail-fast: false
-      matrix:
-        buildplat: ["win_amd64", "win32"]
     steps:
-      - uses: actions/checkout@v4
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
-        env:
-          CIBW_BUILD: "cp3*-${{ matrix.buildplat }}"
-          CIBW_PRERELEASE_PYTHONS: "True"
-          CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
-
-      - name: Assert all versions in wheelhouse
-        if: ${{ ! startsWith(matrix.buildplat[1], 'macos') }}
-        run: |
-          ls wheelhouse/*cp37*.whl
-          ls wheelhouse/*cp38*.whl
-          ls wheelhouse/*cp39*.whl
-          ls wheelhouse/*cp310*.whl
-          ls wheelhouse/*cp311*.whl
-          ls wheelhouse/*cp312*.whl
-
-      - uses: actions/upload-artifact@v3
+      - uses: ./.github/actions/bump
         with:
-          name: wheel-${{ matrix.buildplat }}
-          path: ./wheelhouse/*.whl
+          version: ${{ inputs.version }}
+          post_version: ${{ inputs.post_version }}
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
+          garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
+          artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
+          artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          gpg_key_id: ${{ vars.GPG_KEY_ID }}
+          dry_run: ${{ inputs.dry_run }}
 
-  make_sdist:
-    name: Make SDist
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v4
-        with:
-          # Build sdist on lowest supported Python
-          python-version: '3.7'
-
-      - name: Build SDist
-        run: |
-          pip install check-manifest build
-          check-manifest -v
-          python -m build --sdist .
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: "sdist"
-          path: dist/*.tar.gz
-
-  collect_dist:
-    runs-on: ubuntu-latest
-    needs: [build_wheels, make_sdist]
-    name: Download Wheels
-    steps:
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v3
-      - name: Flatten directory
-        working-directory: .
-        run: |
-          find . -mindepth 2 -type f -exec mv {} . \;
-          find . -type d -empty -delete
-      - uses: actions/upload-artifact@v3
-        with:
-          name: all-dist-${{ github.run_id }}
-          path: "./*"
+  build_dist:
+    needs: [bump-and-tag]
+    uses: ./.github/dist.yml
 
   publish:
-    # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#publishing-the-distribution-to-pypi
-    needs: [collect_dist]
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build_dist]
     runs-on: ubuntu-latest
     environment: release
     permissions:
       id-token: write
       contents: write
     steps:
-    - uses: actions/checkout@v4
-    - name: Download all the dists
-      uses: actions/download-artifact@v3
-      with:
-        name: all-dist-${{ github.run_id }}
-        path: dist/
-    - name: Create the envfile
-      run: |
-        cat << EOF > envfile
-        GRS_CONFIG_USER1_USERNAME=${{ secrets.GRS_CONFIG_USER1_USERNAME }}
-        GRS_CONFIG_USER1_PASSWORD=${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
-        EOF
-    - name: Log in to artifactory
-      uses: redhat-actions/podman-login@v1
-      with:
-        username: ${{ secrets.ARTIFACTORY_USER }}
-        password: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        registry: artifactory.corp.mongodb.com
-    - name: Generate the signature files in a container
-      run: |
-        podman run \
-          --env-file=envfile \
-          --rm \
-          -v $(pwd):$(pwd) \
-          -w $(pwd) \
-          ${{ vars.ARTIFACTORY_IMAGE }} \
-          /bin/bash -c "$(pwd)/scripts/generate-signatures.sh"
-    - name: Create a draft release and add signature files
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }} --notes ""
-        gh release upload ${{ github.ref_name }} signatures/*.sig
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: ./.github/actions/publish
+        with:
+          garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
+          garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
+          artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
+          artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          token: ${{ github.token }}
+          dry_run: ${{ inputs.dry_run }}
