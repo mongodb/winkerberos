@@ -2,6 +2,9 @@
 name: Publish
 description: "Asset Publish Action"
 inputs:
+  version:
+    description: "The published version"
+    required: true
   garasign_username:
     description: "The garasign username"
     required: true
@@ -46,6 +49,7 @@ runs:
       with:
           product_name: winkerberos
           filenames: dist/*
+          version: ${{ inputs.version }}
           token: ${{ inputs.token }}
     - name: Show files
       shell: bash
