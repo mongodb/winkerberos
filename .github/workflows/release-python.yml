@@ -14,7 +14,7 @@ on:
 jobs:
   bump-and-tag:
     environment: release
-    runs-on: windows-2019
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/bump
