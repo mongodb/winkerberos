@@ -34,11 +34,11 @@ runs:
       run: |
         export dist_files=$(ls dist/*)
         echo "DIST_FILES=\"${dist_files}\"" >> $GITHUB_ENV
-    - uses: mongodb-labs/drivers-github-tools/garasign/ggp-sign@main
+    - uses: mongodb-labs/drivers-github-tools/garasign/gpg-sign@main
       with:
         garasign_username: ${{ inputs.garasign_username }}
         garasign_password: ${{ inputs.garasign_password }}
-        artifactory_username: ${{ inputs.artifactory_user }}
+        artifactory_username: ${{ inputs.artifactory_username }}
         artifactory_password: ${{ inputs.artifactory_password }}
         filenames: ${{ env.DIST_FILES }}
     - name: Move the signature files to a separate directory
@@ -46,6 +46,7 @@ runs:
       run: |
           mkdir signatures
           mv dist/*.sig signatures
+          ls -ltr signatures/*
     - name: Create a draft release with release files
       shell: bash
       if: inputs.dry_run == 'false'
