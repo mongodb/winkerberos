@@ -56,8 +56,8 @@ runs:
       command: git commit -a -m "BUMP ${{ inputs.version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
-      artifactory_username: ${{ inputs.art_user }}
-      artifactory_password: ${{ inputs.art_password }}
+      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_password: ${{ inputs.artifactory_password }}
 
   - name: Tag the new version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
