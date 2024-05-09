@@ -35,10 +35,11 @@ runs:
         garasign_password: ${{ inputs.garasign_password }}
         artifactory_username: ${{ inputs.artifactory_username }}
         artifactory_password: ${{ inputs.artifactory_password }}
-        filenames: "dist/*"
+        filenames: dist/*
     - name: Move the signature files to a separate directory
       shell: bash
       run: |
+          set -eux
           mkdir signatures
           mv dist/*.sig signatures
           ls -ltr signatures/*
