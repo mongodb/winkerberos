@@ -22,7 +22,7 @@ jobs:
           version: ${{ inputs.version }}
           post_version: ${{ inputs.post_version }}
           app_id: ${{ vars.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
           garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
           garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
           artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
