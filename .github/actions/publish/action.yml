@@ -42,7 +42,16 @@ runs:
           set -eux
           mkdir signatures
           mv dist/*.sig signatures
-          ls -ltr signatures/*
+    - uses: blink1073/drivers-github-tools/papertrail@test
+      with:
+          product_name: winkerberos
+          filenames: dist/*
+          token: ${{ inputs.token }}
+    - name: Show files
+      shell: bash
+      run: |
+        ls -ltr signatures/*
+        cat papertrail.txt
     - name: Create a draft release with release files
       shell: bash
       if: inputs.dry_run == 'false'
