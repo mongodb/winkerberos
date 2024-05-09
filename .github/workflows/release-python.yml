@@ -4,12 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "The next version to set"
+        description: "The new version to set"
       post_version:
-        description: "The post version to set"
+        description: "The post (dev) version to set"
       dry_run:
         description: "Whether this is a dry run"
-        default: "false"
+        default: false
+        type: boolean
 
 jobs:
   bump-and-tag:
