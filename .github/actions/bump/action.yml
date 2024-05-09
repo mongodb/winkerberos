@@ -63,7 +63,7 @@ runs:
   - name: Commit the new version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      command: git commit -a -m "BUMP ${{ inputs.version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
+      command: git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
       artifactory_username: ${{ inputs.artifactory_username }}
@@ -72,7 +72,7 @@ runs:
   - name: Tag the new version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      command: git tag -a "${{ inputs.version }}" -m "BUMP ${{ inputs.version }}" -s --local-user=${{ inputs.gpg_key_id }}
+      command: git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
       artifactory_username: ${{ inputs.artifactory_username }}
@@ -90,7 +90,7 @@ runs:
   - name: Commit the post version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      command: git commit -a -m "BUMP ${{ inputs.post_version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
+      command: git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
       artifactory_username: ${{ inputs.artifactory_username }}
