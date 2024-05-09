@@ -32,8 +32,9 @@ runs:
     - name: Get the list of dist files to sign
       shell: bash
       run: |
-        export dist_files=$(ls dist/*)
+        export dist_files="$(ls dist/*)"
         echo "DIST_FILES=\"${dist_files}\"" >> $GITHUB_ENV
+        cat $GITHUB_ENV
     - uses: mongodb-labs/drivers-github-tools/garasign/gpg-sign@main
       with:
         garasign_username: ${{ inputs.garasign_username }}
