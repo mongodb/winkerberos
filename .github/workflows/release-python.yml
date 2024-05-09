@@ -8,7 +8,7 @@ on:
       post_version:
         description: "The post (dev) version to set"
       dry_run:
-        description: "Whether this is a dry run"
+        description: "Dry Run?"
         default: false
         type: boolean
 
