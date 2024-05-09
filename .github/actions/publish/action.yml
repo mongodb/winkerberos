@@ -29,19 +29,13 @@ runs:
       with:
         name: all-dist-${{ github.run_id }}
         path: dist/
-    - name: Get the list of dist files to sign
-      shell: bash
-      run: |
-        export dist_files="$(find dist/* -print0)"
-        echo "DIST_FILES=\"${dist_files}\"" >> $GITHUB_ENV
-        cat $GITHUB_ENV
-    - uses: mongodb-labs/drivers-github-tools/garasign/gpg-sign@main
+    - uses: blink1073/drivers-github-tools/garasign/gpg-sign@test
       with:
         garasign_username: ${{ inputs.garasign_username }}
         garasign_password: ${{ inputs.garasign_password }}
         artifactory_username: ${{ inputs.artifactory_username }}
         artifactory_password: ${{ inputs.artifactory_password }}
-        filenames: ${{ env.DIST_FILES }}
+        filenames: "dist/*"
     - name: Move the signature files to a separate directory
       shell: bash
       run: |
