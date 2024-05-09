@@ -2,7 +2,7 @@ name: Dist
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
   workflow_call:
   pull_request:

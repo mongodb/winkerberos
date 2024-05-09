@@ -31,7 +31,7 @@ jobs:
 
   build_dist:
     needs: [bump-and-tag]
-    uses: ./.github/dist.yml
+    uses: ./.github/workflows/dist.yml
 
   publish:
     needs: [build_dist]
