@@ -56,7 +56,7 @@ runs:
       command: git commit -a -m "BUMP ${{ inputs.version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
-      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_username: ${{ inputs.artifactory_username }}
       artifactory_password: ${{ inputs.artifactory_password }}
 
   - name: Tag the new version
@@ -65,7 +65,7 @@ runs:
       command: git tag -a "${{ inputs.version }}" -m "BUMP ${{ inputs.version }}" -s --local-user=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
-      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_username: ${{ inputs.artifactory_username }}
       artifactory_password: ${{ inputs.artifactory_password }}
       skip_setup: true
 
@@ -83,7 +83,7 @@ runs:
       command: git commit -a -m "BUMP ${{ inputs.post_verion }}" -s --gpg-sign=${{ inputs.gpg_key_id }}"
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
-      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_username: ${{ inputs.artifactory_username }}
       artifactory_password: ${{ inputs.artifactory_password }}
       skip_setup: true
 
