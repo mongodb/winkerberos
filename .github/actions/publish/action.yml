@@ -4,16 +4,22 @@ description: "Asset Publish Action"
 inputs:
   garasign_username:
     description: "The garasign username"
+    required: true
   garasign_password:
     description: "The garasign password"
+    required: true
   artifactory_username:
     description: "The artifactory username"
+    required: true
   artifactory_password:
     description: "The artifactory password"
+    required: true
   token:
     description: "The GitHub access token"
+    required: true
   dry_run:
     description: "Whether this is a dry run"
+    required: true
 
 runs:
   using: composite

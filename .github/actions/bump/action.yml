@@ -3,24 +3,34 @@ description: "Bump Version and Create Tag"
 inputs:
   version:
     description: "The next version to set"
+    required: true
   post_version:
     description: "The post version to set"
+    required: true
   app_id:
     description: "The app id of the bot"
+    required: true
   app_private_key:
     description: "The private key of the bot"
+    required: true
   garasign_username:
     description: "The garasign username"
+    required: true
   garasign_password:
     description: "The garasign password"
+    required: true
   artifactory_username:
     description: "The artifactory username"
+    required: true
   artifactory_password:
     description: "The artifactory password"
+    required: true
   gpg_key_id:
     description: "The gpg key id"
+    required: true
   dry_run:
     description: "Whether this is a dry run"
+    required: true
 
 runs:
   using: composite
@@ -46,7 +56,7 @@ runs:
     shell: bash
     run: |
       export CURRENT_VERSION=$(python setup.py --version)
-      export NEW_VERSION=${{inputs.version}}
+      export NEW_VERSION=${{ inputs.version }}
       sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
       git add .
 
@@ -73,14 +83,14 @@ runs:
     shell: bash
     run: |
       export CURRENT_VERSION=${{ inputs.version }}
-      export NEW_VERSION=${{ inputs.post_verion }}
+      export NEW_VERSION=${{ inputs.post_version }}
       sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
       git add .
 
   - name: Commit the post version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      command: git commit -a -m "BUMP ${{ inputs.post_verion }}" -s --gpg-sign=${{ inputs.gpg_key_id }}"
+      command: git commit -a -m "BUMP ${{ inputs.post_version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
       artifactory_username: ${{ inputs.artifactory_username }}
