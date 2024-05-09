@@ -48,6 +48,7 @@ runs:
     - uses: blink1073/drivers-github-tools/papertrail@test
       with:
           product_name: winkerberos
+          release_version: ${{ inputs.version }}
           filenames: dist/*
           version: ${{ inputs.version }}
           token: ${{ inputs.token }}
