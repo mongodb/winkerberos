@@ -83,8 +83,8 @@ runs:
         GH_TOKEN: ${{ inputs.token }}
       run: |
         echo "$GITHUB_RUN_ID" > release_run_id.txt
-        gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }} --notes ""
-        gh release upload ${{ github.ref_name }} signatures/*.sig
+        gh release create ${{ inputs.version }} --draft --verify-tag --title ${{ inputs.version }} --notes ""
+        gh release upload ${{ inputs.version }} signatures/*.sig
         gh release upload ${{ inputs.version }} release_run_id.txt
     # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#publishing-the-distribution-to-pypi
     - name: Publish distribution 📦 to PyPI
