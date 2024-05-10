@@ -51,5 +51,8 @@ jobs:
           garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
           artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
           artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws_bucket_name: ${{ secrets.AWS_BUCKET }}
+          aws_region: ${{ vars.AWS_REGION }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}

@@ -17,6 +17,15 @@ inputs:
   artifactory_password:
     description: "The artifactory password"
     required: true
+  aws_role_arn:
+    description: "The aws role arn to assume"
+    required: true
+  aws_bucket_name:
+    description: "The aws s3 bucket name"
+    required: true
+  aws_region:
+    description: "The aws region for the s3 bucket"
+    required: true
   token:
     description: "The GitHub access token"
     required: true
@@ -56,6 +65,16 @@ runs:
       run: |
         ls -ltr signatures/*
         cat papertrail.txt
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        role-session-name: s3uploadsession
+        aws-region: ${{ inputs.aws_region }}
+    - name: Upload signatures to s3
+      shell: bash
+      run: |
+        aws s3 cp ./signatures s3://${{ inputs.aws_bucket_name }}/winkerberos/${{ inputs.version }}/signatures --recursive
     - name: Create a draft release with release files
       shell: bash
       if: inputs.dry_run == 'false'
