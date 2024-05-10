@@ -41,7 +41,7 @@ runs:
       with:
         name: all-dist-${{ github.run_id }}
         path: dist/
-    - uses: blink1073/drivers-github-tools/garasign/gpg-sign@test
+    - uses: mongodb-labs/drivers-github-tools/garasign/gpg-sign@main
       with:
         garasign_username: ${{ inputs.garasign_username }}
         garasign_password: ${{ inputs.garasign_password }}
@@ -54,7 +54,7 @@ runs:
           set -eux
           mkdir signatures
           mv dist/*.sig signatures
-    - uses: blink1073/drivers-github-tools/papertrail@test
+    - uses: mongodb-labs/drivers-github-tools/papertrail@main
       with:
           product_name: winkerberos
           release_version: ${{ inputs.version }}

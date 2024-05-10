@@ -53,6 +53,6 @@ jobs:
           artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_bucket_name: ${{ secrets.AWS_BUCKET }}
-          aws_region: ${{ vars.AWS_REGION }}
+          aws_region: ${{ vars.AWS_REGION_NAME }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
