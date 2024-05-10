@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: write
     steps:
+    - uses: actions/checkout@v4
     - name: Download the metadata and upload the logs
       env:
         GH_TOKEN: ${{ github.token }}
