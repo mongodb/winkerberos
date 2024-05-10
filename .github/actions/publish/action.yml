@@ -66,7 +66,7 @@ runs:
         ls -ltr signatures/*
         cat papertrail.txt
     - name: configure aws credentials
-      uses: aws-actions/configure-aws-credentials@v3
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         role-session-name: s3uploadsession
@@ -81,8 +81,10 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.token }}
       run: |
+        echo "$GITHUB_RUN_ID" > release_run_id.txt
         gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }} --notes ""
         gh release upload ${{ github.ref_name }} signatures/*.sig
+        gh release upload ${{ inputs.version }} release_run_id.txt
     # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#publishing-the-distribution-to-pypi
     - name: Publish distribution 📦 to PyPI
       if: inputs.dry_run == 'false'
