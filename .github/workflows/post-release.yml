@@ -1,0 +1,24 @@
+name: Upload Logs
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  upload-logs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download the metadata and upload the logs
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -ex
+        gh release download ${{ github.ref_name }}
+        run_id=$(cat release_run_id.txt)
+        gh run view --log $run_id > release_logs.txt
+        gh release upload ${{ github.ref_name }} release_logs.txt

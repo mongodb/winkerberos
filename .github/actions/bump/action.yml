@@ -3,24 +3,34 @@ description: "Bump Version and Create Tag"
 inputs:
   version:
     description: "The next version to set"
+    required: true
   post_version:
     description: "The post version to set"
+    required: true
   app_id:
     description: "The app id of the bot"
-  private_key:
+    required: true
+  app_private_key:
     description: "The private key of the bot"
+    required: true
   garasign_username:
     description: "The garasign username"
+    required: true
   garasign_password:
     description: "The garasign password"
+    required: true
   artifactory_username:
     description: "The artifactory username"
+    required: true
   artifactory_password:
     description: "The artifactory password"
+    required: true
   gpg_key_id:
     description: "The gpg key id"
+    required: true
   dry_run:
     description: "Whether this is a dry run"
+    required: true
 
 runs:
   using: composite
@@ -30,10 +40,6 @@ runs:
     with:
       app-id: ${{ inputs.app_id }}
       private-key: ${{ inputs.app_private_key }}
-
-  - uses: actions/checkout@v4
-    with:
-      token: ${{ steps.app-token.outputs.token }}
 
   - uses: actions/setup-python@v4
     with:
@@ -50,26 +56,26 @@ runs:
     shell: bash
     run: |
       export CURRENT_VERSION=$(python setup.py --version)
-      export NEW_VERSION=${{inputs.version}}
+      export NEW_VERSION=${{ inputs.version }}
       sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
       git add .
 
   - name: Commit the new version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      command: git commit -a -m "BUMP ${{ inputs.version }}" -s --gpg-sign=${{ inputs.gpg_key_id }}
+      command: git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
-      artifactory_username: ${{ inputs.art_user }}
-      artifactory_password: ${{ inputs.art_password }}
+      artifactory_username: ${{ inputs.artifactory_username }}
+      artifactory_password: ${{ inputs.artifactory_password }}
 
   - name: Tag the new version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      command: git tag -a "${{ inputs.version }}" -m "BUMP ${{ inputs.version }}" -s --local-user=${{ inputs.gpg_key_id }}
+      command: git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
-      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_username: ${{ inputs.artifactory_username }}
       artifactory_password: ${{ inputs.artifactory_password }}
       skip_setup: true
 
@@ -77,17 +83,17 @@ runs:
     shell: bash
     run: |
       export CURRENT_VERSION=${{ inputs.version }}
-      export NEW_VERSION=${{ inputs.post_verion }}
+      export NEW_VERSION=${{ inputs.post_version }}
       sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
       git add .
 
   - name: Commit the post version
     uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
     with:
-      command: git commit -a -m "BUMP ${{ inputs.post_verion }}" -s --gpg-sign=${{ inputs.gpg_key_id }}"
+      command: git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{ inputs.gpg_key_id }}
       garasign_username: ${{ inputs.garasign_username }}
       garasign_password: ${{ inputs.garasign_password }}
-      artifactory_username: ${{ inputs.artifactory_user }}
+      artifactory_username: ${{ inputs.artifactory_username }}
       artifactory_password: ${{ inputs.artifactory_password }}
       skip_setup: true
 
@@ -108,6 +114,7 @@ runs:
         exit 1
       fi
       if [ ${{ inputs.dry_run }} != "true" ]; then
+        git remote set-url origin https://${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git
         git push origin --tags
         git push origin
       fi

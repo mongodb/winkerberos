@@ -4,24 +4,26 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "The next version to set"
+        description: "The new version to set"
       post_version:
-        description: "The post version to set"
+        description: "The post (dev) version to set"
       dry_run:
-        description: "Whether this is a dry run"
-        default: "false"
+        description: "Dry Run?"
+        default: false
+        type: boolean
 
 jobs:
   bump-and-tag:
     environment: release
-    runs-on: windows-2019
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/bump
         with:
           version: ${{ inputs.version }}
           post_version: ${{ inputs.post_version }}
           app_id: ${{ vars.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
           garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
           garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
           artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
@@ -31,7 +33,7 @@ jobs:
 
   build_dist:
     needs: [bump-and-tag]
-    uses: ./.github/dist.yml
+    uses: ./.github/workflows/dist.yml
 
   publish:
     needs: [build_dist]
@@ -41,11 +43,16 @@ jobs:
       id-token: write
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/publish
         with:
+          version: ${{ inputs.version }}
           garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
           garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
           artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
           artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws_bucket_name: ${{ secrets.AWS_BUCKET }}
+          aws_region: ${{ vars.AWS_REGION_NAME }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
