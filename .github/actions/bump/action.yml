@@ -7,12 +7,6 @@ inputs:
   post_version:
     description: "The post version to set"
     required: true
-  app_id:
-    description: "The app id of the bot"
-    required: true
-  app_private_key:
-    description: "The private key of the bot"
-    required: true
   garasign_username:
     description: "The garasign username"
     required: true
@@ -35,12 +29,6 @@ inputs:
 runs:
   using: composite
   steps:
-  - uses: actions/create-github-app-token@v1
-    id: app-token
-    with:
-      app-id: ${{ inputs.app_id }}
-      private-key: ${{ inputs.app_private_key }}
-
   - uses: actions/setup-python@v4
     with:
       python-version: '3.11'
@@ -114,7 +102,6 @@ runs:
         exit 1
       fi
       if [ ${{ inputs.dry_run }} != "true" ]; then
-        git remote set-url origin https://${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git
         git push origin --tags
         git push origin
       fi
