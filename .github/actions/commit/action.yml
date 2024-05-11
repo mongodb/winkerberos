@@ -1,0 +1,60 @@
+name: Commit Version
+description: "Commit version and push if not dry run"
+inputs:
+  version:
+    description: "The new version"
+    required: true
+  garasign_username:
+    description: "The garasign username"
+    required: true
+  garasign_password:
+    description: "The garasign password"
+    required: true
+  artifactory_username:
+    description: "The artifactory username"
+    required: true
+  artifactory_password:
+    description: "The artifactory password"
+    required: true
+  gpg_key_id:
+    description: "The gpg key id"
+    required: true
+  dry_run:
+    description: "Whether this is a dry run"
+    required: true
+
+runs:
+  using: composite
+  steps:
+  - name: Set up Git
+    shell: bash
+    run: |
+      # Use the GitHub Actions bot as the actor.
+      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      git config user.name "github-actions[bot]"
+
+      if [ -z "$(git status --porcelain)" ]; then
+        echo "Version was not changed!"
+        exit 1
+      fi
+
+  - name: Commit the version
+    uses: mongodb-labs/drivers-github-tools/garasign/git-sign@main
+    with:
+      command: git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{ inputs.gpg_key_id }}
+      garasign_username: ${{ inputs.garasign_username }}
+      garasign_password: ${{ inputs.garasign_password }}
+      artifactory_username: ${{ inputs.artifactory_username }}
+      artifactory_password: ${{ inputs.artifactory_password }}
+
+  - name: Push the version to the source branch
+    shell: bash
+    run: |
+      if [ -n "$(git status --porcelain)" ]; then
+        echo "Uncommitted changes!"
+        git status --porcelain
+        exit 1
+      fi
+      if [ ${{ inputs.dry_run }} != "true" ]; then
+        git push origin
+      fi
