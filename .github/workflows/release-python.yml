@@ -45,6 +45,7 @@ jobs:
           dry_run: ${{ inputs.dry_run }}
       - uses: ./.github/actions/tag
         with:
+          version: ${{ inputs.version }}
           garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
           garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
           artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
