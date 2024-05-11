@@ -1,0 +1,20 @@
+name: "Run git actions in a signing container"
+description: "Allows running arbitrary git actions in a container with GPG keys loaded"
+inputs:
+  command:
+    description: "Command to run inside the container"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: "Run git command"
+      run: |
+        podman run \
+          --env-file=$GARASIGN_ENVFILE \
+          --rm \
+          -v $(pwd):$(pwd) \
+          -w $(pwd) \
+          ${ARTIFACTORY_REGISTRY}/${ARTIFACTORY_IMAGE} \
+          /bin/bash -c "gpgloader && ${{ inputs.command }}"
+      shell: bash

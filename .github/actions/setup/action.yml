@@ -1,0 +1,64 @@
+name: Setup
+description: "Set up the Release Environment"
+inputs:
+  aws_role_arn:
+    description: "The aws role to acquire"
+    required: true
+  aws_region_name:
+    description: "The aws region to use"
+    required: true
+  aws_secret_id:
+    description: "The name of the aws secret to use"
+    required: true
+  artifactory_registry:
+    description: "Artifactory registry to be used"
+    default: artifactory.corp.mongodb.com
+  artifactory_image:
+    description: "Image to use for artifactory"
+    default: release-tools-container-registry-local/garasign-git
+
+runs:
+  using: composite
+  steps:
+  - name: configure aws credentials
+    uses: aws-actions/configure-aws-credentials@v4
+    with:
+      role-to-assume: ${{ inputs.aws_role_arn }}
+      role-session-name: release-session
+      aws-region: ${{ inputs.aws_region_name }}
+  - name: Set up
+    shell: bash
+    run: |
+      echo "Fetch secrets"
+      export SECRETS_FILE=/tmp/secret-value.json
+      echo $(aws secretsmanager get-secret-value --secret-id ${{ inputs.aws_secret_id }} --query SecretString --output text) > $SECRETS_FILE
+
+      echo "Set up artifactory"
+      export ARTIFACTORY_USER=$(cat $SECRETS_FILE | jq -r '."artifactory-username"')
+      export ARTIFACTORY_PASSWORD=$(cat $SECRETS_FILE | jq -r '."artifactory-password"')
+      export ARTIFACTORY_REGISTRY=${{ inputs.artifactory_registry }}
+      export ARTIFACTORY_IMAGE=${{ inputs.artifactory_image }}
+      echo $ARTIFACTORY_PASSWORD | podman login -u $ARTIFACTORY_USER  --password-stdin $ARTIFACTORY_REGISTRY
+      podman pull $ARTIFACTORY_REGISTRY/$ARTIFACTORY_IMAGE
+
+      echo "Set up envfile for artifactory image"
+      export GARASIGN_ENVFILE=/tmp/envfile
+      cat << EOF > $GARASIGN_ENVFILE
+      GRS_CONFIG_USER1_USERNAME=$(cat $SECRETS_FILE | jq -r '."garasign-username"')
+      GRS_CONFIG_USER1_PASSWORD=$(cat $SECRETS_FILE | jq -r '."garasign-password"')
+      EOF
+
+      echo "Set up global variables"
+      export AWS_BUCKET_NAME=$(cat $SECRETS_FILE | jq -r '."release-assets-bucket"')
+      echo "AWS_BUCKET_NAME=$AWS_BUCKET_NAME" >> $GITHUB_ENV
+      export GPG_KEY_ID=$(cat $SECRETS_FILE | jq -r '."gpg-key-id"')
+      echo "GPG_KEY_ID=$GPG_KEY_ID" >> $GITHUB_ENV
+      export GPG_PUBLIC_URL=$(cat $SECRETS_FILE | jq -r '."gpg-public-url"')
+      echo "GPG_PUBLIC_URL=$GPG_PUBLIC_URL" >> $GITHUB_ENV
+      echo "GARASIGN_ENVFILE=$GARASIGN_ENVFILE" >> $GITHUB_ENV
+      export "ARTIFACTORY_IMAGE=$ARTIFACTORY_IMAGE" >> $GITHUB_ENV
+      export "ARTIFACTORY_REGISTRY=$ARTIFACTORY_REGISTRY" >> $GITHUB_ENV
+
+      echo "Set up git config"
+      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      git config user.name "github-actions[bot]"

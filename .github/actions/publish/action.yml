@@ -8,27 +8,6 @@ inputs:
   product_name:
     description: "The name of the product"
     required: true
-  garasign_username:
-    description: "The garasign username"
-    required: true
-  garasign_password:
-    description: "The garasign password"
-    required: true
-  artifactory_username:
-    description: "The artifactory username"
-    required: true
-  artifactory_password:
-    description: "The artifactory password"
-    required: true
-  aws_role_arn:
-    description: "The aws role arn to assume"
-    required: true
-  aws_bucket_name:
-    description: "The aws s3 bucket name"
-    required: true
-  aws_region:
-    description: "The aws region for the s3 bucket"
-    required: true
   token:
     description: "The GitHub access token"
     required: true
@@ -44,12 +23,9 @@ runs:
       with:
         name: all-dist-${{ github.run_id }}
         path: dist/
-    - uses: mongodb-labs/drivers-github-tools/garasign/gpg-sign@main
+    - name: Create detached signature for dist files
+      uses: ./.github/actions/gpg-sign
       with:
-        garasign_username: ${{ inputs.garasign_username }}
-        garasign_password: ${{ inputs.garasign_password }}
-        artifactory_username: ${{ inputs.artifactory_username }}
-        artifactory_password: ${{ inputs.artifactory_password }}
         filenames: dist/*
     - name: Move the signature files to a separate directory
       shell: bash
@@ -68,17 +44,11 @@ runs:
       run: |
         ls -ltr signatures/*
         cat papertrail.txt
-    - name: configure aws credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ inputs.aws_role_arn }}
-        role-session-name: s3uploadsession
-        aws-region: ${{ inputs.aws_region }}
     - name: Upload signatures to s3
       shell: bash
       if: inputs.dry_run == 'false'
       run: |
-        export TARGET=s3://${{ inputs.aws_bucket_name }}/${{ inputs.product_name }}/${{ inputs.version }}
+        export TARGET=s3://${AWS_BUCKET_NAME}/${{ inputs.product_name }}/${{ inputs.version }}
         aws s3 cp ./signatures $TARGET --recursive
         aws s3 cp papertrail.txt $TARGET
     - name: Create a draft release with release files

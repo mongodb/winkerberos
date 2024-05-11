@@ -1,0 +1,20 @@
+name: "Sign artifact(s) using garasign"
+description: "Signs release artifact(s)"
+inputs:
+  filenames:
+    description: "File name(s) to sign, can be a glob pattern"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: "Create detached signature for file"
+      run: |
+        podman run \
+          --env-file=$GARASIGN_ENVFILE \
+          --rm \
+          -v $(pwd):$(pwd) \
+          -w $(pwd) \
+          ${ARTIFACTORY_REGISTRY}/${ARTIFACTORY_IMAGE} \
+          /bin/bash -c 'gpgloader && for filename in ${{ inputs.filenames }}; do gpg --detach-sign --armor --output ${filename}.sig ${filename}; done'
+      shell: bash

@@ -28,30 +28,34 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      - uses: ./.github/actions/setup
       - name: Set new version
         shell: bash
         run: |
           export CURRENT_VERSION=$(python setup.py --version)
           export NEW_VERSION=${{ inputs.version }}
           sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
-      - uses: ./.github/actions/commit
+      - name: Commit the version bump
+        uses: ./.github/actions/git-sign
         with:
-          version: ${{ inputs.version }}
-          garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
-          garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
-          artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
-          artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          gpg_key_id: ${{ vars.GPG_KEY_ID }}
-          dry_run: ${{ inputs.dry_run }}
-      - uses: ./.github/actions/tag
+          command: "git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{env.GPG_KEY_ID}}"
+      - name: Tag the version
+        uses: ./.github/actions/git-sign
         with:
-          version: ${{ inputs.version }}
-          garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
-          garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
-          artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
-          artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          gpg_key_id: ${{ vars.GPG_KEY_ID }}
-          dry_run: ${{ inputs.dry_run }}
+          command: "git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{env.GPG_KEY_ID}}"
+      - name: Verify the tag
+        shell: bash
+        run: |
+          curl -O $GPG_PUBLIC_URL > /tmp/signature.pub
+          gpg --import /tmp/signature.pub
+          git verify-tag ${{inputs.version}}
+      - name: Push the commit and tag to the source branch
+        shell: bash
+        run: |
+          if [ ${{ inputs.dry_run }} != "true" ]; then
+            git push origin
+            git push origin --tags
+          fi
 
   build-dist:
     needs: [bump-and-tag]
@@ -76,33 +80,27 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      - uses: ./.github/actions/setup
       - uses: ./.github/actions/publish
         with:
           version: ${{ inputs.version }}
           product_name: winkerberos
-          garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
-          garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
-          artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
-          artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws_bucket_name: ${{ secrets.AWS_BUCKET }}
-          aws_region: ${{ vars.AWS_REGION_NAME }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
       - name: Set post version
         shell: bash
         run: |
           git clean -dffx
-          git fetch origin ${{ github.ref_name }}
           export CURRENT_VERSION=$(python setup.py --version)
           export NEW_VERSION=${{ inputs.post_version }}
           sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
-      - uses: ./.github/actions/commit
+      - name: Commit the version bump
+        uses: ./.github/actions/git-sign
         with:
-          version: ${{ inputs.post_version }}
-          garasign_username: ${{ secrets.GRS_CONFIG_USER1_USERNAME }}
-          garasign_password: ${{ secrets.GRS_CONFIG_USER1_PASSWORD }}
-          artifactory_username: ${{ secrets.ARTIFACTORY_USER }}
-          artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          gpg_key_id: ${{ vars.GPG_KEY_ID }}
-          dry_run: ${{ inputs.dry_run }}
+          command: "git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{env.GPG_KEY_ID}}"
+      - name: Push the commit to the source branch
+        shell: bash
+        run: |
+          if [ ${{ inputs.dry_run }} != "true" ]; then
+            git push origin --tags
+          fi
