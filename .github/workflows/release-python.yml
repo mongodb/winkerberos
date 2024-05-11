@@ -89,6 +89,7 @@ jobs:
       - name: Set post version
         shell: bash
         run: |
+          git clean -dffx
           export CURRENT_VERSION=${{ inputs.version }}
           export NEW_VERSION=${{ inputs.post_version }}
           sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
