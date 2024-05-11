@@ -29,6 +29,10 @@ jobs:
         with:
           python-version: '3.11'
       - uses: ./.github/actions/setup
+        with:
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws_region_name: ${{ vars.AWS_REGION_NAME }}
+          aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
       - name: Set new version
         shell: bash
         run: |
@@ -81,6 +85,10 @@ jobs:
         with:
           python-version: '3.11'
       - uses: ./.github/actions/setup
+        with:
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws_region_name: ${{ vars.AWS_REGION_NAME }}
+          aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
       - uses: ./.github/actions/publish
         with:
           version: ${{ inputs.version }}
