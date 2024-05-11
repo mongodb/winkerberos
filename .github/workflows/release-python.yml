@@ -73,6 +73,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
       - uses: ./.github/actions/publish
         with:
           version: ${{ inputs.version }}
@@ -90,7 +93,7 @@ jobs:
         shell: bash
         run: |
           git clean -dffx
-          export CURRENT_VERSION=${{ inputs.version }}
+          export CURRENT_VERSION=$(python setup.py --version)
           export NEW_VERSION=${{ inputs.post_version }}
           sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
       - uses: ./.github/actions/commit

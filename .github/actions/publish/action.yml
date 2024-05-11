@@ -78,7 +78,9 @@ runs:
       shell: bash
       if: inputs.dry_run == 'false'
       run: |
-        aws s3 cp ./signatures s3://${{ inputs.aws_bucket_name }}/${{ inputs.product_name }}/${{ inputs.version }}/signatures --recursive
+        export TARGET=s3://${{ inputs.aws_bucket_name }}/${{ inputs.product_name }}/${{ inputs.version }}
+        aws s3 cp ./signatures $TARGET --recursive
+        aws s3 cp papertrail.txt $TARGET
     - name: Create a draft release with release files
       shell: bash
       if: inputs.dry_run == 'false'
@@ -90,6 +92,6 @@ runs:
         gh release upload ${{ inputs.version }} signatures/*.sig
         gh release upload ${{ inputs.version }} release_run_id.txt
     # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#publishing-the-distribution-to-pypi
-    - name: Publish distribution 📦 to PyPI
-      if: inputs.dry_run == 'false'
-      uses: pypa/gh-action-pypi-publish@release/v1
+    # - name: Publish distribution 📦 to PyPI
+    #   if: inputs.dry_run == 'false'
+    #   uses: pypa/gh-action-pypi-publish@release/v1
