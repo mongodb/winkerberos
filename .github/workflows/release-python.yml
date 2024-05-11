@@ -93,6 +93,7 @@ jobs:
         shell: bash
         run: |
           git clean -dffx
+          git fetch origin ${{ github.ref_name }}
           export CURRENT_VERSION=$(python setup.py --version)
           export NEW_VERSION=${{ inputs.post_version }}
           sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
