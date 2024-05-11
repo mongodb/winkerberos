@@ -16,6 +16,9 @@ jobs:
   bump-and-tag:
     environment: release
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
