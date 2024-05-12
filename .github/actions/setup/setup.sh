@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -eu
 
-echo "::group::Fetch secrets"
+echo "Fetch secrets"
 SECRETS_FILE=/tmp/secret-value.json
 echo "$(aws secretsmanager get-secret-value --secret-id ${AWS_SECRET_ID} --query SecretString --output text)" > $SECRETS_FILE
-ARTIFACTORY_USER=$(cat $SECRETS_FILE | jq -r '."artifactory-username"')
-ARTIFACTORY_PASSWORD=$(cat $SECRETS_FILE | jq -r '."artifactory-password"')
-GRS_CONFIG_USER1_USERNAME=$(cat $SECRETS_FILE | jq -r '."garasign-username"')
 # Ensure sensitive secrets are masked in logs.
+ARTIFACTORY_USER=$(cat $SECRETS_FILE | jq -r '."artifactory-username"')
+echo "::add-mask::$ARTIFACTORY_USER"
+ARTIFACTORY_PASSWORD=$(cat $SECRETS_FILE | jq -r '."artifactory-password"')
+echo "::add-mask::$ARTIFACTORY_PASSWORD"
+GRS_CONFIG_USER1_USERNAME=$(cat $SECRETS_FILE | jq -r '."garasign-username"')
 echo "::add-mask::$GRS_CONFIG_USER1_USERNAME"
 GRS_CONFIG_USER1_PASSWORD=$(cat $SECRETS_FILE | jq -r '."garasign-password"')
 echo "::add-mask::$GRS_CONFIG_USER1_PASSWORD"
@@ -16,7 +18,7 @@ GPG_KEY_ID=$(cat $SECRETS_FILE | jq -r '."gpg-key-id"')
 AWS_BUCKET=$(cat $SECRETS_FILE | jq -r '."release-assets-bucket"')
 echo "::add-mask::$AWS_BUCKET"
 rm $SECRETS_FILE
-echo "::endgroup::"
+echo "Fetch secrets... done."
 
 set -x
 
