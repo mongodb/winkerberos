@@ -12,7 +12,7 @@ if [ "$DRY_RUN" == "false" ]; then
     echo "Uploading Release Reports"
     TARGET=s3://${AWS_BUCKET}/${PRODUCT_NAME}/${VERSION}
     aws s3 cp ./signatures $TARGET --recursive
-    aws s3 cp papertrail.txt $TARGET
+    aws s3 cp papertrail.txt $TARGET/papertrail.txt
 
     echo "Creating draft release with attached files"
     gh release create ${VERSION} --draft --verify-tag --title ${VERSION} --notes ""

@@ -19,8 +19,6 @@ echo "::add-mask::$AWS_BUCKET"
 rm $SECRETS_FILE
 echo "Fetch secrets... done."
 
-set -x
-
 echo "::group::Set up artifactory"
 echo $ARTIFACTORY_PASSWORD | podman login -u $ARTIFACTORY_USER --password-stdin $ARTIFACTORY_REGISTRY
 podman pull $ARTIFACTORY_REGISTRY/$ARTIFACTORY_IMAGE
