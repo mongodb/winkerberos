@@ -21,7 +21,7 @@ EOF
 echo "Set up global variables"
 AWS_BUCKET_FILE=/tmp/aws_bucket.txt
 cat $SECRETS_FILE | jq -r '."release-assets-bucket"' > $AWS_BUCKET_FILE
-echo "AWS_BUCKET_FILE=$AWS_BUCKET_FILE"
+echo "AWS_BUCKET_FILE=$AWS_BUCKET_FILE" >> $GITHUB_ENV
 echo "GPG_KEY_ID=$(cat $SECRETS_FILE | jq -r '."gpg-key-id"')" >> $GITHUB_ENV
 echo "GPG_PUBLIC_URL=$(cat $SECRETS_FILE | jq -r '."gpg-public-url"')" >> $GITHUB_ENV
 echo "GARASIGN_ENVFILE=$GARASIGN_ENVFILE" >> $GITHUB_ENV
