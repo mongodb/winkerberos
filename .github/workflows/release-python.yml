@@ -92,7 +92,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: ./.github/actions/publish
+      - uses: ./.github/actions/python-publish
         with:
           version: ${{ inputs.version }}
           product_name: winkerberos

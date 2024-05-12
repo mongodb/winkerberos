@@ -1,6 +1,6 @@
 
-name: Publish
-description: "Asset Publish Action"
+name: Publish Python
+description: "Publish Assets and Report"
 inputs:
   version:
     description: "The published version"
@@ -33,38 +33,21 @@ runs:
     - name: Move the signature files to a separate directory
       shell: bash
       run: |
-          set -eux
-          mkdir signatures
-          mv dist/*.sig signatures
+        set -eux
+        mkdir signatures
+        mv dist/*.sig signatures
     - uses: mongodb-labs/drivers-github-tools/papertrail@main
       with:
-          product_name: ${{ inputs.product_name }}
-          release_version: ${{ inputs.version }}
-          filenames: dist/*
-          token: ${{ inputs.token }}
-    - name: Show files
+        product_name: ${{ inputs.product_name }}
+        release_version: ${{ inputs.version }}
+        filenames: dist/*
+        token: ${{ inputs.token }}
+    - name: Run publish script
       shell: bash
-      run: |
-        ls -ltr signatures/*
-        cat papertrail.txt
-    - name: Upload signatures to s3
-      shell: bash
-      if: inputs.dry_run == 'false'
-      run: |
-        export AWS_BUCKET=$(cat $AWS_BUCKET_FILE)
-        export TARGET=s3://$AWS_BUCKET/${{ inputs.product_name }}/${{ inputs.version }}
-        aws s3 cp ./signatures $TARGET --recursive
-        aws s3 cp papertrail.txt $TARGET
-    - name: Create a draft release with release files
-      shell: bash
-      if: inputs.dry_run == 'false'
+      run: ${{ github.action_path }}/publish.sh
       env:
         GH_TOKEN: ${{ inputs.token }}
-      run: |
-        echo "$GITHUB_RUN_ID" > release_run_id.txt
-        gh release create ${{ inputs.version }} --draft --verify-tag --title ${{ inputs.version }} --notes ""
-        gh release upload ${{ inputs.version }} signatures/*.sig
-        gh release upload ${{ inputs.version }} release_run_id.txt
+        VERSION: ${{ inputs.version }}
     # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#publishing-the-distribution-to-pypi
     # - name: Publish distribution 📦 to PyPI
     #   if: inputs.dry_run == 'false'
