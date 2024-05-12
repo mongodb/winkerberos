@@ -53,7 +53,7 @@ jobs:
       - name: Verify the tag
         shell: bash
         run: |
-          curl -O $GPG_PUBLIC_URL > /tmp/signature.pub
+          curl $GPG_PUBLIC_URL --output /tmp/signature.pub
           gpg --import /tmp/signature.pub
           git verify-tag ${{inputs.version}}
       - name: Push the commit and tag to the source branch
