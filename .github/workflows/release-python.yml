@@ -45,11 +45,11 @@ jobs:
       - name: Commit the version bump
         uses: ./.github/actions/git-sign
         with:
-          command: "git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{env.GPG_KEY_ID}}"
+          command: "git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${GPG_KEY_ID}"
       - name: Tag the version
         uses: ./.github/actions/git-sign
         with:
-          command: "git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{env.GPG_KEY_ID}}"
+          command: "git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${GPG_KEY_ID}"
       - name: Verify the tag
         shell: bash
         run: |
@@ -96,6 +96,7 @@ jobs:
         with:
           version: ${{ inputs.version }}
           product_name: winkerberos
+          aws_bucket_name: ${{ secrets.AWS_BUCKET_NAME }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
       - name: Set post version
@@ -108,7 +109,7 @@ jobs:
       - name: Commit the version bump
         uses: ./.github/actions/git-sign
         with:
-          command: "git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{env.GPG_KEY_ID}}"
+          command: "git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${GPG_KEY_ID}"
       - name: Push the commit to the source branch
         shell: bash
         run: |

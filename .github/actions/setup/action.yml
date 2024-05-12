@@ -46,18 +46,14 @@ runs:
       cat << EOF > $GARASIGN_ENVFILE
       GRS_CONFIG_USER1_USERNAME=$(cat $SECRETS_FILE | jq -r '."garasign-username"')
       GRS_CONFIG_USER1_PASSWORD=$(cat $SECRETS_FILE | jq -r '."garasign-password"')
+      GPG_KEY_ID=$(cat $SECRETS_FILE | jq -r '."gpg-key-id"')
       EOF
 
       echo "Set up global variables"
-      export AWS_BUCKET_NAME=$(cat $SECRETS_FILE | jq -r '."release-assets-bucket"')
-      echo "AWS_BUCKET_NAME=$AWS_BUCKET_NAME" >> $GITHUB_ENV
-      export GPG_KEY_ID=$(cat $SECRETS_FILE | jq -r '."gpg-key-id"')
-      echo "GPG_KEY_ID=$GPG_KEY_ID" >> $GITHUB_ENV
-      export GPG_PUBLIC_URL=$(cat $SECRETS_FILE | jq -r '."gpg-public-url"')
-      echo "GPG_PUBLIC_URL=$GPG_PUBLIC_URL" >> $GITHUB_ENV
+      echo "GPG_PUBLIC_URL=$(cat $SECRETS_FILE | jq -r '."gpg-public-url"')" >> $GITHUB_ENV
       echo "GARASIGN_ENVFILE=$GARASIGN_ENVFILE" >> $GITHUB_ENV
-      export "ARTIFACTORY_IMAGE=$ARTIFACTORY_IMAGE" >> $GITHUB_ENV
-      export "ARTIFACTORY_REGISTRY=$ARTIFACTORY_REGISTRY" >> $GITHUB_ENV
+      echo "ARTIFACTORY_IMAGE=$ARTIFACTORY_IMAGE" >> $GITHUB_ENV
+      echo "ARTIFACTORY_REGISTRY=$ARTIFACTORY_REGISTRY" >> $GITHUB_ENV
 
       echo "Set up git config"
       git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

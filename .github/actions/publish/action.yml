@@ -8,6 +8,9 @@ inputs:
   product_name:
     description: "The name of the product"
     required: true
+  aws_bucket_name:
+    description: "The aws bucket name for uploads"
+    required: true
   token:
     description: "The GitHub access token"
     required: true
@@ -48,7 +51,7 @@ runs:
       shell: bash
       if: inputs.dry_run == 'false'
       run: |
-        export TARGET=s3://${AWS_BUCKET_NAME}/${{ inputs.product_name }}/${{ inputs.version }}
+        export TARGET=s3://${{ inputs.aws_bucket_name }}/${{ inputs.product_name }}/${{ inputs.version }}
         aws s3 cp ./signatures $TARGET --recursive
         aws s3 cp papertrail.txt $TARGET
     - name: Create a draft release with release files
