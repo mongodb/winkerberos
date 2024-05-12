@@ -1,5 +1,5 @@
-
 #!/usr/bin/env bash
+
 set -e
 
 echo "Show public outputs"
@@ -10,8 +10,8 @@ cat release_run_id.txt
 
 if [ "$DRY_RUN" == "false" ]; then
     echo "Uploading Release Reports"
-    export AWS_BUCKET=$(cat $AWS_BUCKET_FILE)
-    export TARGET=s3://$AWS_BUCKET/${{ inputs.product_name }}/${VERSION}
+    AWS_BUCKET=$(cat $AWS_BUCKET_FILE)
+    TARGET=s3://$AWS_BUCKET/${PRODUCT_NAME}/${VERSION}
     aws s3 cp ./signatures $TARGET --recursive
     aws s3 cp papertrail.txt $TARGET
 

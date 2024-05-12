@@ -2,24 +2,24 @@
 set -e
 
 echo "Fetch secrets"
-export SECRETS_FILE=/tmp/secret-value.json
-echo $(aws secretsmanager get-secret-value --secret-id ${AWS_SECRED_ID} --query SecretString --output text) > $SECRETS_FILE
+SECRETS_FILE=/tmp/secret-value.json
+echo "$(aws secretsmanager get-secret-value --secret-id ${AWS_SECRED_ID} --query SecretString --output text)" > $SECRETS_FILE
 
 echo "Set up artifactory"
-export ARTIFACTORY_USER=$(cat $SECRETS_FILE | jq -r '."artifactory-username"')
-export ARTIFACTORY_PASSWORD=$(cat $SECRETS_FILE | jq -r '."artifactory-password"')
+ARTIFACTORY_USER=$(cat $SECRETS_FILE | jq -r '."artifactory-username"')
+ARTIFACTORY_PASSWORD=$(cat $SECRETS_FILE | jq -r '."artifactory-password"')
 echo $ARTIFACTORY_PASSWORD | podman login -u $ARTIFACTORY_USER  --password-stdin $ARTIFACTORY_REGISTRY
 podman pull $ARTIFACTORY_REGISTRY/$ARTIFACTORY_IMAGE
 
 echo "Set up envfile for artifactory image"
-export GARASIGN_ENVFILE=/tmp/envfile
+GARASIGN_ENVFILE=/tmp/envfile
 cat << EOF > $GARASIGN_ENVFILE
 GRS_CONFIG_USER1_USERNAME=$(cat $SECRETS_FILE | jq -r '."garasign-username"')
 GRS_CONFIG_USER1_PASSWORD=$(cat $SECRETS_FILE | jq -r '."garasign-password"')
 EOF
 
 echo "Set up global variables"
-export AWS_BUCKET_FILE=/tmp/aws_bucket.txt
+AWS_BUCKET_FILE=/tmp/aws_bucket.txt
 cat $SECRETS_FILE | jq -r '."release-assets-bucket"' > $AWS_BUCKET_FILE
 echo "AWS_BUCKET_FILE=$AWS_BUCKET_FILE"
 echo "GPG_KEY_ID=$(cat $SECRETS_FILE | jq -r '."gpg-key-id"')" >> $GITHUB_ENV
