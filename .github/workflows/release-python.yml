@@ -12,6 +12,10 @@ on:
         default: false
         type: boolean
 
+defaults:
+  run:
+    shell: bash -eux {0}
+
 jobs:
   bump-and-tag:
     environment: release
@@ -37,7 +41,6 @@ jobs:
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
       - name: Set new version
-        shell: bash
         run: |
           export CURRENT_VERSION=$(python setup.py --version)
           export NEW_VERSION=${{ inputs.version }}
@@ -51,13 +54,11 @@ jobs:
         with:
           command: git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{ env.GPG_KEY_ID }}
       - name: Verify the tag
-        shell: bash
         run: |
           curl $GPG_PUBLIC_URL --output /tmp/signature.pub
           gpg --import /tmp/signature.pub
           git verify-tag ${{inputs.version}}
       - name: Push the commit and tag to the source branch
-        shell: bash
         run: |
           if [ ${{ inputs.dry_run }} != "true" ]; then
             git push origin
@@ -100,7 +101,6 @@ jobs:
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
       - name: Set post version
-        shell: bash
         run: |
           git clean -dffx
           export CURRENT_VERSION=$(python setup.py --version)
@@ -111,7 +111,6 @@ jobs:
         with:
           command: git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
       - name: Push the commit to the source branch
-        shell: bash
         run: |
           if [ ${{ inputs.dry_run }} != "true" ]; then
             git push origin --tags

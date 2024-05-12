@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -eux
 
 echo "Show public outputs"
 echo "$GITHUB_RUN_ID" > release_run_id.txt
@@ -10,8 +10,7 @@ cat release_run_id.txt
 
 if [ "$DRY_RUN" == "false" ]; then
     echo "Uploading Release Reports"
-    AWS_BUCKET=$(cat $AWS_BUCKET_FILE)
-    TARGET=s3://$AWS_BUCKET/${PRODUCT_NAME}/${VERSION}
+    TARGET=s3://${AWS_BUCKET}/${PRODUCT_NAME}/${VERSION}
     aws s3 cp ./signatures $TARGET --recursive
     aws s3 cp papertrail.txt $TARGET
 

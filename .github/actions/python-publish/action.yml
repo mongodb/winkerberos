@@ -31,9 +31,8 @@ runs:
       with:
         filenames: dist/*
     - name: Move the signature files to a separate directory
-      shell: bash
+      shell: bash -eux {0}
       run: |
-        set -eux
         mkdir signatures
         mv dist/*.sig signatures
     - uses: mongodb-labs/drivers-github-tools/papertrail@main
