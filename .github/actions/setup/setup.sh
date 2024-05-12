@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-set -e
+set -eu
 
 echo "Fetch secrets"
 SECRETS_FILE=/tmp/secret-value.json
-echo "$(aws secretsmanager get-secret-value --secret-id ${AWS_SECRED_ID} --query SecretString --output text)" > $SECRETS_FILE
+echo "$(aws secretsmanager get-secret-value --secret-id ${AWS_SECRET_ID} --query SecretString --output text)" > $SECRETS_FILE
 
 echo "Set up artifactory"
 ARTIFACTORY_USER=$(cat $SECRETS_FILE | jq -r '."artifactory-username"')

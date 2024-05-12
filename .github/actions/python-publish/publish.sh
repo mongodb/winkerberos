@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu
 
 echo "Show public outputs"
 echo "$GITHUB_RUN_ID" > release_run_id.txt
