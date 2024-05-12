@@ -33,7 +33,6 @@ echo "GPG_PUBLIC_URL=$GPG_PUBLIC_URL" >> $GITHUB_ENV
 echo "GARASIGN_ENVFILE=$GARASIGN_ENVFILE" >> $GITHUB_ENV
 echo "ARTIFACTORY_IMAGE=$ARTIFACTORY_IMAGE" >> $GITHUB_ENV
 echo "ARTIFACTORY_REGISTRY=$ARTIFACTORY_REGISTRY" >> $GITHUB_ENV
-rm $SECRETS_FILE
 
 echo "Set up git config"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
