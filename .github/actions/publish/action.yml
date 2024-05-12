@@ -51,7 +51,8 @@ runs:
       shell: bash
       if: inputs.dry_run == 'false'
       run: |
-        export TARGET=s3://${{ inputs.aws_bucket_name }}/${{ inputs.product_name }}/${{ inputs.version }}
+        export AWS_BUCKET=$(cat $AWS_BUCKET_FILE)
+        export TARGET=s3://$AWS_BUCKET/${{ inputs.product_name }}/${{ inputs.version }}
         aws s3 cp ./signatures $TARGET --recursive
         aws s3 cp papertrail.txt $TARGET
     - name: Create a draft release with release files
