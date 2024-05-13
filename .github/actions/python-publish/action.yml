@@ -33,10 +33,10 @@ runs:
         name: all-dist-${{ github.run_id }}
         path: dist/
     - name: Create detached signature for dist files
-      uses: ../gpg-sign
+      uses: ./.github/actions/gpg-sign
       with:
         filenames: dist/*
-    - uses: ../authorized-pub
+    - uses: ./.github/actions/authorized-pub
       with:
         product_name: ${{ inputs.product_name }}
         release_version: ${{ inputs.version }}
@@ -44,7 +44,7 @@ runs:
         token: ${{ inputs.token }}
     - name: Run publish script
       shell: bash
-      run: ./publish.sh
+      run: ${{github.action_path}}/publish.sh
       env:
         GH_TOKEN: ${{ inputs.token }}
         VERSION: ${{ inputs.version }}
@@ -60,7 +60,7 @@ runs:
         git clean -dffx
         bash ${{ inputs.version_bump_script }} ${{ inputs.version }}
     - name: Commit the version bump
-      uses: ../git-sign
+      uses: ./.github/actions/git-sign
       with:
         command: git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
     - name: Push the commit to the source branch
