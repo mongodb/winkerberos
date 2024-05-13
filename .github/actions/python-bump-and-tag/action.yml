@@ -14,7 +14,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: Set new version
@@ -22,7 +22,7 @@ runs:
       run: |
         bash ${{ inputs.version_bump_script }} ${{ inputs.version }}
     - name: Commit the version bump
-      uses: ${{ github.action_path }}../git-sign
+      uses: ${{ github.action_path }}/../git-sign
       with:
         command: git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
     - name: Tag the version
