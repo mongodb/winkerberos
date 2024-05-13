@@ -8,7 +8,7 @@ inputs:
   post_version:
     description: "The post version"
     required: true
-  bump_script:
+  version_bump_script:
     description: "The version bump script"
     required: true
   product_name:
