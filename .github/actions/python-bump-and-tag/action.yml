@@ -10,6 +10,9 @@ inputs:
   version_bump_script:
     description: "The version bump script"
     required: true
+  dry_run:
+    description: "Whether this is a dry run"
+    required: true
 
 runs:
   using: composite

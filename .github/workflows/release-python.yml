@@ -42,6 +42,7 @@ jobs:
         with:
           version: ${{ inputs.version }}
           version_bump_script: ./.github/scripts/bump-version.sh
+          dry_run: ${{ inputs.dry_run }}
 
   build-dist:
     needs: [bump-and-tag]
