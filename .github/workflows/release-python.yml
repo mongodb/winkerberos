@@ -24,6 +24,7 @@ jobs:
       id-token: write
       contents: write
     steps:
+      # TODO: these two steps can be part of setup when we move it upstream
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
@@ -32,38 +33,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
       - uses: ./.github/actions/setup
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - name: Set new version
-        run: |
-          export CURRENT_VERSION=$(python setup.py --version)
-          export NEW_VERSION=${{ inputs.version }}
-          sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
-      - name: Commit the version bump
-        uses: ./.github/actions/git-sign
+      - uses: ./.github/actions/python-bump-and-tag
         with:
-          command: git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
-      - name: Tag the version
-        uses: ./.github/actions/git-sign
-        with:
-          command: git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{ env.GPG_KEY_ID }}
-      - name: Verify the tag
-        run: |
-          curl $GPG_PUBLIC_URL --output /tmp/signature.pub
-          gpg --import /tmp/signature.pub
-          git verify-tag ${{inputs.version}}
-      - name: Push the commit and tag to the source branch
-        run: |
-          if [ ${{ inputs.dry_run }} != "true" ]; then
-            git push origin
-            git push origin --tags
-          fi
+          version: ${{ inputs.version }}
+          version_bump_script: ./.github/scripts/bump-version.sh
 
   build-dist:
     needs: [bump-and-tag]
@@ -85,9 +63,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
       - uses: ./.github/actions/setup
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
@@ -96,22 +71,8 @@ jobs:
       - uses: ./.github/actions/python-publish
         with:
           version: ${{ inputs.version }}
+          post_version: ${{ inputs.post_version }}
+          version_bump_script: ./.github/scripts/bump-version.sh
           product_name: winkerberos
-          aws_bucket_name: ${{ secrets.AWS_BUCKET_NAME }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
-      - name: Set post version
-        run: |
-          git clean -dffx
-          export CURRENT_VERSION=$(python setup.py --version)
-          export NEW_VERSION=${{ inputs.post_version }}
-          sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
-      - name: Commit the version bump
-        uses: ./.github/actions/git-sign
-        with:
-          command: git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
-      - name: Push the commit to the source branch
-        run: |
-          if [ ${{ inputs.dry_run }} != "true" ]; then
-            git push origin --tags
-          fi

@@ -5,11 +5,14 @@ inputs:
   version:
     description: "The published version"
     required: true
+  post_version:
+    description: "The post version"
+    required: true
+  bump_script:
+    description: "The version bump script"
+    required: true
   product_name:
     description: "The name of the product"
-    required: true
-  aws_bucket_name:
-    description: "The aws bucket name for uploads"
     required: true
   token:
     description: "The GitHub access token"
@@ -21,21 +24,19 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
     - name: Download all the dists
       uses: actions/download-artifact@v3
       with:
         name: all-dist-${{ github.run_id }}
         path: dist/
     - name: Create detached signature for dist files
-      uses: ./.github/actions/gpg-sign
+      uses: ${{ github.action_path }}/../gpg-sign
       with:
         filenames: dist/*
-    - name: Move the signature files to a separate directory
-      shell: bash -eux {0}
-      run: |
-        mkdir signatures
-        mv dist/*.sig signatures
-    - uses: mongodb-labs/drivers-github-tools/papertrail@main
+    - uses: ${{ github.action_path }}/../authorized-pub
       with:
         product_name: ${{ inputs.product_name }}
         release_version: ${{ inputs.version }}
@@ -53,3 +54,18 @@ runs:
     # - name: Publish distribution 📦 to PyPI
     #   if: inputs.dry_run == 'false'
     #   uses: pypa/gh-action-pypi-publish@release/v1
+    - name: Set post version
+      shell: bash -eux {0}
+      run: |
+        git clean -dffx
+        bash ${{ inputs.version_bump_script }} ${{ inputs.version }}
+    - name: Commit the version bump
+      uses: ${{ github.action_path }}/../git-sign
+      with:
+        command: git commit -a -m \"BUMP ${{ inputs.post_version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
+    - name: Push the commit to the source branch
+      shell: bash -eux {0}
+      run: |
+        if [ ${{ inputs.dry_run }} != "true" ]; then
+          git push origin --tags
+        fi

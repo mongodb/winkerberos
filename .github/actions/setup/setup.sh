@@ -31,6 +31,10 @@ GRS_CONFIG_USER1_USERNAME=$GRS_CONFIG_USER1_USERNAME
 GRS_CONFIG_USER1_PASSWORD=$GRS_CONFIG_USER1_PASSWORD
 EOF
 
+echo "Store the run id file"
+export RELEASE_ASSETS=/tmp/release-assets
+echo "$GITHUB_RUN_ID" > $RELEASE_ASSETS/release_run_id.txt
+
 echo "Set up global variables"
 echo "AWS_BUCKET=$AWS_BUCKET" >> $GITHUB_ENV
 echo "GPG_KEY_ID=$GPG_KEY_ID" >> $GITHUB_ENV
@@ -38,6 +42,8 @@ echo "GPG_PUBLIC_URL=$GPG_PUBLIC_URL" >> $GITHUB_ENV
 echo "GARASIGN_ENVFILE=$GARASIGN_ENVFILE" >> $GITHUB_ENV
 echo "ARTIFACTORY_IMAGE=$ARTIFACTORY_IMAGE" >> $GITHUB_ENV
 echo "ARTIFACTORY_REGISTRY=$ARTIFACTORY_REGISTRY" >> $GITHUB_ENV
+echo "RELEASE_ASSETS=$RELEASE_ASSETS" >> $GITHUB_ENV
+echo "S3_ASSETS=/tmp/s3-assets" >> $GITHUB_ENV
 
 echo "Set up git config"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

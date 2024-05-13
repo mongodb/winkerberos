@@ -9,6 +9,7 @@ runs:
   using: composite
   steps:
     - name: "Create detached signature for file"
+      shell: bash
       run: |
         podman run \
           --env-file=$GARASIGN_ENVFILE \
@@ -17,4 +18,8 @@ runs:
           -w $(pwd) \
           ${ARTIFACTORY_REGISTRY}/${ARTIFACTORY_IMAGE} \
           /bin/bash -c 'gpgloader && for filename in ${{ inputs.filenames }}; do gpg --detach-sign --armor --output ${filename}.sig ${filename}; done'
+
+    - name: "Move the signature files to the release directory"
       shell: bash
+      run: |
+        mv ${{inputs.filenames}}.sig $RELEASE_ASSETS
