@@ -26,7 +26,7 @@ runs:
       with:
         command: git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
     - name: Tag the version
-      uses: ${{ github.action_path }}../git-sign
+      uses: ./.github/actions/git-sign
       with:
         command: git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{ env.GPG_KEY_ID }}
     - name: Verify the tag
