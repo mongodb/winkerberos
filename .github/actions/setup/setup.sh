@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-echo "Fetch secrets"
+echo "Fetch secrets..."
 SECRETS_FILE=/tmp/secret-value.json
 echo "$(aws secretsmanager get-secret-value --secret-id ${AWS_SECRET_ID} --query SecretString --output text)" > $SECRETS_FILE
 # Ensure sensitive secrets are masked in logs.
