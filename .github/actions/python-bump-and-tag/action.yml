@@ -1,0 +1,44 @@
+name: Python Bump and Tag
+description: Perform bump and tag operations for Python Libraries
+inputs:
+  version:
+    description: "The published version"
+    required: true
+  post_version:
+    description: "The post version"
+    required: true
+  bump_script:
+    description: "The version bump script"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Set new version
+      shell: bash -eux {0}
+      run: |
+        bash ${{ inputs.version_bump_script }} ${{ inputs.version }}
+    - name: Commit the version bump
+      uses: ${{ github.action_path }}../git-sign
+      with:
+        command: git commit -a -m \"BUMP ${{ inputs.version }}\" -s --gpg-sign=${{ env.GPG_KEY_ID }}
+    - name: Tag the version
+      uses: ${{ github.action_path }}../git-sign
+      with:
+        command: git tag -a \"${{ inputs.version }}\" -m \"BUMP ${{ inputs.version }}\" -s --local-user=${{ env.GPG_KEY_ID }}
+    - name: Verify the tag
+      shell: bash -eux {0}
+      run: |
+        curl $GPG_PUBLIC_URL --output /tmp/signature.pub
+        gpg --import /tmp/signature.pub
+        git verify-tag ${{inputs.version}}
+    - name: Push the commit and tag to the source branch
+      shell: bash -eux {0}
+      run: |
+        if [ ${{ inputs.dry_run }} != "true" ]; then
+          git push origin
+          git push origin --tags
+        fi
