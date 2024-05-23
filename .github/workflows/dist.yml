@@ -24,7 +24,8 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.17.0
         env:
-          CIBW_BUILD: "cp3*-${{ matrix.buildplat }}"
+          # TODO: change this back to cp3*
+          CIBW_BUILD: "cp38-${{ matrix.buildplat }}"
           CIBW_PRERELEASE_PYTHONS: "True"
           CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
 
@@ -37,7 +38,7 @@ jobs:
           ls wheelhouse/*cp311*.whl
           ls wheelhouse/*cp312*.whl
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: wheel-${{ matrix.buildplat }}
           path: ./wheelhouse/*.whl
@@ -46,9 +47,9 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           # Build sdist on lowest supported Python
           python-version: '3.8'
@@ -59,7 +60,7 @@ jobs:
           check-manifest -v
           python -m build --sdist .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: "sdist"
           path: dist/*.tar.gz
@@ -70,13 +71,13 @@ jobs:
     name: Download Wheels
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Flatten directory
         working-directory: .
         run: |
           find . -mindepth 2 -type f -exec mv {} . \;
           find . -type d -empty -delete
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: all-dist-${{ github.run_id }}
           path: "./*"
