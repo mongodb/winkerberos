@@ -1,6 +1,7 @@
 include README.rst
 include LICENSE
 include requirements.txt
+exclude sbom.json
 recursive-include doc *.bat
 recursive-include doc *.py
 recursive-include doc *.rst
