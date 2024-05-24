@@ -5,8 +5,10 @@ on:
     inputs:
       version:
         description: "The new version to set"
-      post_version:
-        description: "The post (dev) version to set"
+        required: true
+      following_version:
+        description: "The following (dev) version"
+        required: true
       dry_run:
         description: "Dry Run?"
         default: false
@@ -68,10 +70,10 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/publish@v2
+      - uses: blink1073/drivers-github-tools/python/publish@test-pypi
         with:
           version: ${{ inputs.version }}
-          post_version: ${{ inputs.post_version }}
+          following_version: ${{ inputs.post_version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           product_name: winkerberos
           token: ${{ github.token }}
