@@ -76,5 +76,6 @@ jobs:
           following_version: ${{ inputs.post_version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           product_name: winkerberos
+          silk_asset_group: winkerberos
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
