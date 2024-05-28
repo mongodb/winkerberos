@@ -58,7 +58,7 @@ jobs:
         category: "/language:${{matrix.language}}"
 
     - name: Debug
-      run: ls -ltr
+      run: dir
 
     - name: "Export SARIF file from code scanning alerts"
       uses: "alcaeus/drivers-github-tools/code-scanning-export@export-code-scanning-report"
