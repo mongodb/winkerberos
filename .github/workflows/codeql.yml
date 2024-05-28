@@ -56,3 +56,13 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
+
+    - name: "Export SARIF file from code scanning alerts"
+      uses: "alcaeus/drivers-github-tools/code-scanning-export@export-code-scanning-report"
+
+    - name: "Attach generated SARIF file to build artifacts"
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-scanning-alerts-${{matrix.language}}.json
+        path: code-scanning-alerts.json
+        retention-days: 3
