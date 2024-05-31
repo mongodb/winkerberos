@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: "The new version to set"
-      post_version:
+      following_version:
         description: "The post (dev) version to set"
       dry_run:
         description: "Dry Run?"
@@ -76,7 +76,7 @@ jobs:
       - uses: mongodb-labs/drivers-github-tools/python/publish@v2
         with:
           version: ${{ inputs.version }}
-          post_version: ${{ inputs.post_version }}
+          following_version: ${{ inputs.following_version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           product_name: winkerberos
           token: ${{ github.token }}
