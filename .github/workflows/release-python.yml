@@ -72,7 +72,10 @@ jobs:
       - name: "Generate Sarif Report"
         uses: "alcaeus/drivers-github-tools/code-scanning-export@export-code-scanning-report"
         with:
-          output-file: ${{env.S3_ASSETS}}/sarif-report.json
+          output-file: sarif-report.json
+      - name: "move that file"
+        run: |
+          mv sarif-report.json $S3_ASSETS
       - uses: mongodb-labs/drivers-github-tools/python/publish@v2
         with:
           version: ${{ inputs.version }}
