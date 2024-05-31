@@ -54,6 +54,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      security-events: write
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
