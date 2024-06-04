@@ -49,7 +49,7 @@ jobs:
 
   static-scan:
     needs: [bump-and-tag]
-    uses: ./github/workflows/codeql.yml
+    uses: ./.github/workflows/codeql.yml
     with:
       ref: ${{ inputs.version }}
 
