@@ -75,15 +75,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - name: "Generate Sarif Report"
-        uses: "mongodb-labs/drivers-github-tools/code-scanning-export@v2"
-        with:
-          output-file: sarif-report.json
-          ref: ${{ inputs.version }}
-      - name: "upload that file"
-        run: |
-          mv sarif-report.json $S3_ASSETS
-      - uses: mongodb-labs/drivers-github-tools/python/publish@v2
+      - uses: blink1073/drivers-github-tools/python/publish@python-sarif
         with:
           version: ${{ inputs.version }}
           following_version: ${{ inputs.following_version }}
