@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
-      - uses: mongodb-labs/drivers-github-tools/setup@v2
+      - uses: blink1073/drivers-github-tools/setup@add-compliance-report
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
