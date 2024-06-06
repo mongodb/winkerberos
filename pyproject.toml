@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "winkerberos"
-version = "0.12.36"
+version = "0.12.37"
 description = "High level interface to SSPI for Kerberos client auth"
 readme = "README.rst"
 license = { file = "LICENSE" }
