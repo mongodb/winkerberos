@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: "The new version to set"
-      post_version:
+      following_version:
         description: "The post (dev) version to set"
       dry_run:
         description: "Dry Run?"
@@ -47,13 +47,20 @@ jobs:
     needs: [bump-and-tag]
     uses: ./.github/workflows/dist.yml
 
+  static-scan:
+    needs: [bump-and-tag]
+    uses: ./.github/workflows/codeql.yml
+    with:
+      ref: ${{ inputs.version }}
+
   publish-and-bump:
-    needs: [build-dist]
+    needs: [build-dist, static-scan]
     runs-on: ubuntu-latest
     environment: release
     permissions:
       id-token: write
       contents: write
+      security-events: write
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -74,7 +81,7 @@ jobs:
       - uses: blink1073/drivers-github-tools/python/publish@add-compliance-report
         with:
           version: ${{ inputs.version }}
-          post_version: ${{ inputs.post_version }}
+          following_version: ${{ inputs.following_version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           product_name: winkerberos
           silk_asset_group: winkerberos
