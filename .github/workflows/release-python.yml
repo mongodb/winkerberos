@@ -68,7 +68,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/publish@v2
+      - uses: blink1073/drivers-github-tools/python/publish@add-compliance-report
         with:
           version: ${{ inputs.version }}
           post_version: ${{ inputs.post_version }}
