@@ -37,10 +37,10 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/bump-and-tag@v2
+      - uses: mongodb-labs/drivers-github-tools/python/pre-release@bump-version
         with:
           version: ${{ inputs.version }}
-          version_bump_script: ./.github/scripts/bump-version.sh
+          version_bump_script: "bash ./.github/scripts/bump-version.sh"
           dry_run: ${{ inputs.dry_run }}
 
   build-dist:
@@ -75,11 +75,11 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/publish@v2
+      - uses: mongodb-labs/drivers-github-tools/python/publish@bump-version
         with:
           version: ${{ inputs.version }}
           following_version: ${{ inputs.following_version }}
-          version_bump_script: ./.github/scripts/bump-version.sh
+          version_bump_script: "bash ./.github/scripts/bump-version.sh"
           product_name: winkerberos
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
