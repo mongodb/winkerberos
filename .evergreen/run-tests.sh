@@ -8,7 +8,7 @@ bash ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/enter
 source secrets-export.sh
 
 # Set up env
-git clone https://github.com/mongodb/mongo-python-driver
+git clone -b winkerberos-test https://github.com/blink1073/mongo-python-driver
 
 set -x
 "C:/python/Python38/python.exe" -m venv .venv
