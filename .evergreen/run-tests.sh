@@ -2,7 +2,9 @@
 # Disable xtrace for security reasons (just in case it was accidentally set).
 set +x
 
+echo "running klist"
 klist
+echo "ran klist"
 
 exit 0
 

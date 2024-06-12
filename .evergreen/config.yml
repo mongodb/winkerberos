@@ -63,26 +63,24 @@ functions:
           echo "{ \"releases\": { \"default\": \"${MONGODB_BINARIES}\" }}" > ${MONGO_ORCHESTRATION_HOME}/orchestration.config
           # MONGODB_VERSION=latest \
           #   TOPOLOGY=server \
-          #   AUTH=auth \
-          #   SSL=ssl \
           #   bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
 
   "run unit tests":
     - command: subprocess.exec
       type: test
       params:
+        binary: bash
         working_dir: "src"
         include_expansions_in_env: ["DRIVERS_TOOLS"]
         args:
           - ./.evergreen/run-tests.sh
 
   "stop mongo-orchestration":
-    - command: shell.exec
+    - command: subprocess.exec
       params:
-        script: |
-          ${PREPARE_SHELL}
-          set -o xtrace
-          bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh
+        binary: bash
+        args:
+          - bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh
 
 pre:
   - func: fetch source
