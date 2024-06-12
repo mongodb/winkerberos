@@ -43,9 +43,9 @@ pre:
 
 post:
   - func: teardown
-  - command: attach.results
+  - command: attach.xunit_results
     params:
-      file: "mongo-python-driver/xunit-results/TEST-*.xml"
+      file:  "mongo-python-driver/xunit-results/TEST-*.xml"
 
 tasks:
 - name: run-tests
