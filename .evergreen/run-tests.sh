@@ -17,10 +17,9 @@ export KERBEROS_PASSWORD=${SASL_PASS}
 
 # Set up env
 "C:/python/Python38/python.exe" -m venv .venv
-.venv/Scripts/activate
-pip install pymongo pytest
-pip install -e .
+.venv/Scripts/pip install pymongo pytest
+.venv/Scripts/pip install -e .
 
 # TODO: handle xunit results
 # Run tests
-pytest
+.venv/Scripts/pytest
