@@ -43,7 +43,6 @@ _PASSWORD = os.environ.get("KERBEROS_PASSWORD")
 class TestWinKerberos(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        global _SPN
         if not _HAVE_PYMONGO:
             raise unittest.SkipTest("Could not import pymongo")
         if _SPN is None:
