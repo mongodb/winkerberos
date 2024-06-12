@@ -11,9 +11,9 @@ source ${DRIVERS_TOOLS}/.evergreen/secrets_handling/secrets-export.sh
 export KERBEROS_SERVICE=${PRINCIPAL}
 export KERBEROS_PRINCIPAL=
 export KERBEROS_UPN=
-export KERBEROS_USER=
+export KERBEROS_USER=${SASL_USER}
 export KERBEROS_DOMAIN=
-export KERBEROS_PASSWORD=
+export KERBEROS_PASSWORD=${SASL_PASS}
 
 # Set up env
 "C:/python/Python38/python.exe" -m venv .venv
