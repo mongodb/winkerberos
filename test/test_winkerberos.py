@@ -40,9 +40,6 @@ _USER = os.environ.get("KERBEROS_USER")
 _DOMAIN = os.environ.get("KERBEROS_DOMAIN")
 _PASSWORD = os.environ.get("KERBEROS_PASSWORD")
 
-if _CANONICALIZE_HOSTNAME is not None and _SPN is not None:
-    _SPN = _SPN.lower()
-
 
 class TestWinKerberos(unittest.TestCase):
     @classmethod
