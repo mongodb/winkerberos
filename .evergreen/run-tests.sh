@@ -10,8 +10,9 @@ source secrets-export.sh
 # Set up env
 git clone https://github.com/mongodb/mongo-python-driver
 
+set -x
 "C:/python/Python38/python.exe" -m venv .venv
-dos2unix -q ".venv/Scripts/activate" || true
+dos2unix -q .venv/Scripts/activate
 .venv/Scripts/activate
 pip install "./mongo-python-driver[test]"
 pip install -e .
