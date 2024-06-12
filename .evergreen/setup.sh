@@ -3,23 +3,28 @@
 set -eux
 
 # Get the current unique version of this checkout
+# shellcheck disable=SC2154
 if [ "${is_patch}" = "true" ]; then
+    # shellcheck disable=SC2154
     CURRENT_VERSION=$(git describe)-patch-${version_id}
 else
     CURRENT_VERSION=latest
 fi
 
-export DRIVERS_TOOLS="$(dirname $(pwd))/drivers-tools"
-export PROJECT_DIRECTORY="$(pwd)"
+export DRIVERS_TOOLS
+DRIVERS_TOOLS="$(dirname "$(pwd)")/drivers-tools"
+export PROJECT_DIRECTORY
+PROJECT_DIRECTORY="$(pwd)"
 
 # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
 if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
-    export DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
-    export PROJECT_DIRECTORY=$(cygpath -m $PROJECT_DIRECTORY)
+    DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
+    PROJECT_DIRECTORY=$(cygpath -m $PROJECT_DIRECTORY)
 fi
 
 export MONGO_ORCHESTRATION_HOME="$DRIVERS_TOOLS/.evergreen/orchestration"
 export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
+# shellcheck disable=SC2154
 export UPLOAD_BUCKET="${project}"
 
 cat <<EOT > expansion.yml
