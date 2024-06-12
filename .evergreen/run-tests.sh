@@ -14,6 +14,7 @@ export KERBEROS_UPN=
 export KERBEROS_USER=${SASL_USER}
 export KERBEROS_DOMAIN=
 export KERBEROS_PASSWORD=${SASL_PASS}
+export KERBEROS_CANONICALIZE_HOSTNAME=1
 
 # Set up env
 "C:/python/Python38/python.exe" -m venv .venv

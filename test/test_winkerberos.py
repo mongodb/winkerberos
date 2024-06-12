@@ -34,15 +34,20 @@ _HOST = os.environ.get("MONGODB_HOST", "localhost")
 _PORT = int(os.environ.get("MONGODB_PORT", 27017))
 _SPN = os.environ.get("KERBEROS_SERVICE")
 _PRINCIPAL = os.environ.get("KERBEROS_PRINCIPAL")
+_CANONICALIZE_HOSTNAME = os.environ.get("KERBEROS_CANONICALIZE_HOSTNAME")
 _UPN = os.environ.get("KERBEROS_UPN")
 _USER = os.environ.get("KERBEROS_USER")
 _DOMAIN = os.environ.get("KERBEROS_DOMAIN")
 _PASSWORD = os.environ.get("KERBEROS_PASSWORD")
 
+if _CANONICALIZE_HOSTNAME is not None and _SPN is not None:
+    _SPN = _SPN.lower()
+
 
 class TestWinKerberos(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        global _SPN
         if not _HAVE_PYMONGO:
             raise unittest.SkipTest("Could not import pymongo")
         if _SPN is None:
