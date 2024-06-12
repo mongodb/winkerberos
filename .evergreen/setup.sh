@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-set +x
+set -eux
 
 # Get the current unique version of this checkout
 if [ "${is_patch}" = "true" ]; then
