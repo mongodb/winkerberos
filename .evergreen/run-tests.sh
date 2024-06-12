@@ -5,7 +5,7 @@ set -eu
 
 # Fetch secrets
 bash ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/enterprise_auth
-source ${DRIVERS_TOOLS}/.evergreen/secrets_handling/secrets-export.sh
+source secrets-export.sh
 
 # Map secrets
 export KERBEROS_SERVICE=${PRINCIPAL}
