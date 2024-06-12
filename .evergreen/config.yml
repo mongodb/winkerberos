@@ -1,0 +1,62 @@
+exec_timeout_secs: 3600
+
+functions:
+  "fetch source" :
+    - command: git.get_project
+      params:
+        directory: src
+
+pre:
+  command: shell.exec
+  params:
+    script: |
+      rm -rf src || true
+      echo "pre-task run. JUST ONE COMMAND"
+
+post:
+  - command: shell.exec
+    params:
+      script: |
+        echo "post-task run."
+        true
+  - command: attach.results
+    params:
+      file_location: src/results.json
+
+tasks:
+- name: install
+  depends_on: []
+  commands:
+    - func: "fetch source"
+    - command: shell.exec
+      type: test
+      params:
+        shell: "bash"
+        working_dir: "src"
+        script: |
+           "C:/python/Python38/python.exe" -m venv .venv
+           .venv/bin/activate
+           env
+
+- name: unitttest
+  depends_on:
+  - name: install
+  commands:
+    - func: "fetch source"
+    - command: shell.exec
+      type: test
+      params:
+        shell: "bash"
+        working_dir: "src"
+        script: |
+          ls
+
+buildvariants:
+- name: unittest
+  display_name: Unittest
+  modules: ~
+  run_on:
+  - windows-64-vsMulti-small
+  tasks:
+  - name: install
+  - name: unitttest
