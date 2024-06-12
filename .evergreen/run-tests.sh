@@ -18,4 +18,4 @@ pip install "./mongo-python-driver[test]"
 pip install -e .
 
 export TEST_ENTERPRISE_AUTH=1
-bash ./mongo-python-driver/run-tests.sh
+bash ./mongo-python-driver/.evergreen/run-tests.sh
