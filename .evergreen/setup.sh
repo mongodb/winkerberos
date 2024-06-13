@@ -15,7 +15,7 @@ fi
 DRIVERS_TOOLS="$(dirname "$(pwd)")/drivers-tools"
 PROJECT_DIRECTORY="$(pwd)"
 
-if [ "Windows_NT" = "$OS" ]; then
+if [ "Windows_NT" = "${OS:-}" ]; then
     DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
     PROJECT_DIRECTORY=$(cygpath -m $PROJECT_DIRECTORY)
 fi
