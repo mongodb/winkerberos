@@ -63,10 +63,33 @@ tasks:
   commands:
     - func: "run unit tests"
 
+- name: "assign-pr-reviewer"
+  tags: ["pr"]
+  allowed_requesters: ["patch", "github_pr"]
+  commands:
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        add_expansions_to_env: true
+        working_dir: "src"
+    - command: shell.exec
+      type: test
+      params:
+        shell: "bash"
+        working_dir: src
+        args:
+          - ./.evergreen/assign-pr-reviewer.sh
+
 buildvariants:
 - name: tests
-  display_name: tests
-  run_on:
-  - windows-64-vsMulti-small
+  display_name: Run Tests
+  run_on: windows-64-vsMulti-small
   tasks:
   - name: run-tests
+
+- name: rhel8-pr-assign-reviewer
+  display_name: Assign PR Reviewer
+  run_on: rhel87-small
+  tasks:
+    - name: "assign-pr-reviewer"
