@@ -36,7 +36,7 @@ UPLOAD_BUCKET: "$UPLOAD_BUCKET"
 PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
 EOT
 
-# Bootstrap mongo-orchestration
+# Set up drivers-tools with a .env file.
 git clone https://github.com/mongodb-labs/drivers-evergreen-tools.git ${DRIVERS_TOOLS}
 cat <<EOT > ${DRIVERS_TOOLS}/.env
 CURRENT_VERSION="$CURRENT_VERSION"
