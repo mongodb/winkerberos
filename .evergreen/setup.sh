@@ -13,9 +13,12 @@ fi
 
 # Python has cygwin path problems on Windows.
 DRIVERS_TOOLS="$(dirname "$(pwd)")/drivers-tools"
-DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
 PROJECT_DIRECTORY="$(pwd)"
-PROJECT_DIRECTORY=$(cygpath -m $PROJECT_DIRECTORY)
+
+if [ "Windows_NT" = "$OS" ]; then
+    DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
+    PROJECT_DIRECTORY=$(cygpath -m $PROJECT_DIRECTORY)
+fi
 export PROJECT_DIRECTORY
 export DRIVERS_TOOLS
 
