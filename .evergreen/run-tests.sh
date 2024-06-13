@@ -17,8 +17,8 @@ dos2unix -q .venv/Scripts/activate
 . .venv/Scripts/activate
 pip install "./mongo-python-driver[test]"
 pip install -e ./src
-popd
 
 pushd ./mongo-python-driver
 TEST_ENTERPRISE_AUTH=1 bash ./.evergreen/run-tests.sh
+popd
 popd
