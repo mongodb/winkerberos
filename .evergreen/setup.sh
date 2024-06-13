@@ -11,16 +11,13 @@ else
     CURRENT_VERSION=latest
 fi
 
-export DRIVERS_TOOLS
+# Python has cygwin path problems on Windows.
 DRIVERS_TOOLS="$(dirname "$(pwd)")/drivers-tools"
-export PROJECT_DIRECTORY
+DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
 PROJECT_DIRECTORY="$(pwd)"
-
-# Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
-if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
-    DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
-    PROJECT_DIRECTORY=$(cygpath -m $PROJECT_DIRECTORY)
-fi
+PROJECT_DIRECTORY=$(cygpath -m $PROJECT_DIRECTORY)
+export PROJECT_DIRECTORY
+export DRIVERS_TOOLS
 
 export MONGO_ORCHESTRATION_HOME="$DRIVERS_TOOLS/.evergreen/orchestration"
 export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
