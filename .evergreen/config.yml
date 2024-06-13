@@ -21,6 +21,16 @@ functions:
       params:
         file: src/expansion.yml
 
+  "bootstrap mongo-orchestration":
+    - command: subprocess.exec
+      params:
+        binary: bash
+        env:
+          MONGODB_VERSION: latest
+          TOPOLOGY: server
+        args:
+          - ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
+
   "run unit tests":
     - command: subprocess.exec
       type: test
@@ -40,6 +50,7 @@ functions:
 
 pre:
   - func: setup
+  - func: bootstrap mongo-orchestration
 
 post:
   - func: teardown

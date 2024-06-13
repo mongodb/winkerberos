@@ -43,8 +43,3 @@ MONGODB_BINARIES="$MONGODB_BINARIES"
 UPLOAD_BUCKET="$UPLOAD_BUCKET"
 PROJECT_DIRECTORY="$PROJECT_DIRECTORY"
 EOT
-
-bash ${DRIVERS_TOOLS}/.evergreen/setup.sh
-    MONGODB_VERSION=latest \
-    TOPOLOGY=server \
-    bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
