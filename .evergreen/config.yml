@@ -41,6 +41,16 @@ functions:
         args:
           - ./.evergreen/run-tests.sh
 
+  "assign pr reviewer":
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        add_expansions_to_env: true
+        working_dir: "src"
+        args:
+          - ./.evergreen/assign-pr-reviewer.sh
+
   "teardown":
     - command: subprocess.exec
       params:
@@ -63,23 +73,11 @@ tasks:
   commands:
     - func: "run unit tests"
 
-- name: "assign-pr-reviewer"
+- name: assign-pr-reviewer
   tags: ["pr"]
   allowed_requesters: ["patch", "github_pr"]
   commands:
-    - command: subprocess.exec
-      type: test
-      params:
-        binary: bash
-        add_expansions_to_env: true
-        working_dir: "src"
-    - command: shell.exec
-      type: test
-      params:
-        shell: "bash"
-        working_dir: src
-        args:
-          - ./.evergreen/assign-pr-reviewer.sh
+    - func: "assign pr reviewer"
 
 buildvariants:
 - name: tests
