@@ -16,7 +16,7 @@ on:
 
 env:
   # Changes per repo
-  PRODUCT_NAME: winkerberos
+  PRODUCT_NAME: WinKerberos
   # Changes per branch
   SILK_ASSET_GROUP: winkerberos
 
