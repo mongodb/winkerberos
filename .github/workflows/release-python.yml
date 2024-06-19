@@ -5,55 +5,60 @@ on:
     inputs:
       version:
         description: "The new version to set"
+        required: true
       following_version:
         description: "The post (dev) version to set"
+        required: true
       dry_run:
         description: "Dry Run?"
         default: false
         type: boolean
+
+env:
+  # Changes per repo
+  PRODUCT_NAME: winkerberos
+  # Changes per branch
+  SILK_ASSET_GROUP: winkerberos
 
 defaults:
   run:
     shell: bash -eux {0}
 
 jobs:
-  bump-and-tag:
+  pre-publish:
     environment: release
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
     steps:
-      - uses: actions/create-github-app-token@v1
-        id: app-token
+      - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - uses: mongodb-labs/drivers-github-tools/setup@v2
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/bump-and-tag@v2
+          artifactory_username: ${{ vars.ARTIFACTORY_USERNAME }}
+      - uses: mongodb-labs/drivers-github-tools/python/pre-publish@v2
         with:
           version: ${{ inputs.version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           dry_run: ${{ inputs.dry_run }}
 
   build-dist:
-    needs: [bump-and-tag]
+    needs: [pre-publish]
     uses: ./.github/workflows/dist.yml
 
   static-scan:
-    needs: [bump-and-tag]
+    needs: [pre-publish]
     uses: ./.github/workflows/codeql.yml
     with:
       ref: ${{ inputs.version }}
 
-  publish-and-bump:
+  publish:
     needs: [build-dist, static-scan]
     runs-on: ubuntu-latest
     environment: release
@@ -62,24 +67,22 @@ jobs:
       contents: write
       security-events: write
     steps:
-      - uses: actions/create-github-app-token@v1
-        id: app-token
+      - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - uses: mongodb-labs/drivers-github-tools/setup@v2
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/publish@v2
+          artifactory_username: ${{ vars.ARTIFACTORY_USERNAME }}
+      - uses: blink1073/drivers-github-tools/python/publish@test-releases
         with:
           version: ${{ inputs.version }}
-          following_version: ${{ inputs.following_version }}
           version_bump_script: ./.github/scripts/bump-version.sh
-          product_name: winkerberos
+          following_version: ${{ inputs.following_version }}
+          product_name: ${{ env.PRODUCT_NAME }}
+          silk_asset_group: ${{ env.SILK_ASSET_GROUP }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}

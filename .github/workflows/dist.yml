@@ -1,4 +1,4 @@
-name: Dist
+name: PythonDist
 
 on:
   push:
