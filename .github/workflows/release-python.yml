@@ -19,6 +19,7 @@ env:
   PRODUCT_NAME: WinKerberos
   # Changes per branch
   SILK_ASSET_GROUP: winkerberos
+  EVERGREEN_PROJECT: winkerberos
 
 defaults:
   run:
@@ -77,12 +78,13 @@ jobs:
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
           artifactory_username: ${{ vars.ARTIFACTORY_USERNAME }}
-      - uses: mongodb-labs/drivers-github-tools/python/publish@v2
+      - uses: blink1073/drivers-github-tools/python/publish@add-evergreen-link
         with:
           version: ${{ inputs.version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           following_version: ${{ inputs.following_version }}
           product_name: ${{ env.PRODUCT_NAME }}
           silk_asset_group: ${{ env.SILK_ASSET_GROUP }}
+          evergreen_project: ${{ env.EVERGREEN_PROJECT }}
           token: ${{ github.token }}
           dry_run: ${{ inputs.dry_run }}
