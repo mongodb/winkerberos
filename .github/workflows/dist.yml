@@ -5,6 +5,10 @@ on:
     branches: [master]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
   pull_request:
 
 concurrency:
@@ -21,6 +25,8 @@ jobs:
         buildplat: ["win_amd64", "win32"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.17.0
         env:
@@ -47,6 +53,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: actions/setup-python@v5
         with:
