@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Changes in Version 0.11.0
+-------------------------
+
+- Drop support for Python version 3.7.
+- Add Secure Software Development Life Cycle automation to release process.
+  GitHub Releases now include a Software Bill of Materials, and signature
+  files corresponding to the distribution files released on PyPI.
+
 Changes in Version 0.10.0
 -------------------------
 
