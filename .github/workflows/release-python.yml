@@ -52,12 +52,14 @@ jobs:
   build-dist:
     needs: [pre-publish]
     uses: ./.github/workflows/dist.yml
+    with:
+      ref: ${{ inputs.dry_run == 'true' && github.ref || inputs.version }}
 
   static-scan:
     needs: [pre-publish]
     uses: ./.github/workflows/codeql.yml
     with:
-      ref: ${{ github.ref }}
+      ref: ${{ inputs.dry_run == 'true' && github.ref || inputs.version }}
 
   publish:
     needs: [build-dist, static-scan]
