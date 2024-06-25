@@ -33,7 +33,7 @@ jobs:
       id-token: write
       contents: write
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      version: ${{ steps.pre-publish.outputs.version }}
     steps:
       - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
         with:
@@ -45,18 +45,12 @@ jobs:
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
           artifactory_username: ${{ vars.ARTIFACTORY_USERNAME }}
-      - uses: mongodb-labs/drivers-github-tools/python/pre-publish@v2
+      - uses: blink1073/drivers-github-tools/python/pre-publish@handle-version
+        id: pre-publish
         with:
           version: ${{ inputs.version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           dry_run: ${{ inputs.dry_run }}
-      - name: Handle version
-        run: |
-          if [ "${{ inputs.dry_run}}" == 'true' ]; then
-            echo "version=${{ github.ref }}" >> $GITHUB_OUTPUT
-          else
-            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
-          fi
 
   build-dist:
     needs: [pre-publish]
