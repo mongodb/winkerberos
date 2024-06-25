@@ -32,6 +32,8 @@ jobs:
     permissions:
       id-token: write
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
         with:
@@ -48,18 +50,25 @@ jobs:
           version: ${{ inputs.version }}
           version_bump_script: ./.github/scripts/bump-version.sh
           dry_run: ${{ inputs.dry_run }}
+      - name: Handle version
+        run: |
+          if [ "${{ inputs.dry_run}}" == 'true' ]; then
+            echo "version=${{ github.ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          fi
 
   build-dist:
     needs: [pre-publish]
     uses: ./.github/workflows/dist.yml
     with:
-      ref: ${{ inputs.dry_run == 'true' && github.ref || inputs.version }}
+      ref: ${{ needs.pre-publish.outputs.version }}
 
   static-scan:
     needs: [pre-publish]
     uses: ./.github/workflows/codeql.yml
     with:
-      ref: ${{ inputs.dry_run == 'true' && github.ref || inputs.version }}
+      ref: ${{ needs.pre-publish.outputs.version }}
 
   publish:
     needs: [build-dist, static-scan]
