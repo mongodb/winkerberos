@@ -12,7 +12,7 @@ pushd ..
 git clone https://github.com/mongodb/mongo-python-driver
 
 set -x
-"C:/python/Python38/python.exe" -m venv .venv
+"C:/python/Python39/python.exe" -m venv .venv
 dos2unix -q .venv/Scripts/activate
 . .venv/Scripts/activate
 pip install "./mongo-python-driver[test]"
