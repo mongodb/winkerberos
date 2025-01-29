@@ -26,6 +26,6 @@ export GSSAPI_HOST=${SASL_HOST}
 export GSSAPI_PORT=${SASL_PORT}
 export GSSAPI_PRINCIPAL=${PRINCIPAL}
 pushd ./mongo-python-driver
-pytest -m auth
+pytest -W default -m auth
 popd
 popd
