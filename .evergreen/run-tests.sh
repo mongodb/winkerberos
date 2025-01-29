@@ -17,9 +17,15 @@ dos2unix -q .venv/Scripts/activate
 . .venv/Scripts/activate
 pip install "./mongo-python-driver[test]"
 pip install -e ./src
-pip install uv
 
+export CLIENT_PEM="$DRIVERS_TOOLS/.evergreen/x509gen/client.pem"
+export CA_PEM="$DRIVERS_TOOLS/.evergreen/x509gen/ca.pem"
+export GSSAPI_PASS=${SASL_PASS}
+export GSSAPI_CANONICALIZE="true"
+export GSSAPI_HOST=${SASL_HOST}
+export GSSAPI_PORT=${SASL_PORT}
+export GSSAPI_PRINCIPAL=${PRINCIPAL}
 pushd ./mongo-python-driver
-TEST_ENTERPRISE_AUTH=1 bash ./.evergreen/run-tests.sh
+pytest -m auth
 popd
 popd
