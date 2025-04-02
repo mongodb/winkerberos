@@ -15,6 +15,10 @@ concurrency:
   group: dist-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash -eux {0}
+
 jobs:
   build_wheels:
     name: "Build Wheels ${{ matrix.buildplat }}"
@@ -29,14 +33,13 @@ jobs:
           ref: ${{ inputs.ref }}
           persist-credentials: false
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.23.2
         env:
           CIBW_BUILD: "cp3*-${{ matrix.buildplat }}"
           CIBW_PRERELEASE_PYTHONS: "True"
           CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
 
       - name: Assert all versions in wheelhouse
-        if: ${{ ! startsWith(matrix.buildplat[1], 'macos') }}
         run: |
           ls wheelhouse/*cp38*.whl
           ls wheelhouse/*cp39*.whl
