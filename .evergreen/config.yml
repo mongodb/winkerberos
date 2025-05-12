@@ -32,12 +32,15 @@ functions:
           - ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
 
   "run unit tests":
+    - command: ec2.assume_role
+      params:
+        role_arn: ${drivers_test_secrets_role}
     - command: subprocess.exec
       type: test
       params:
         binary: bash
         working_dir: "src"
-        include_expansions_in_env: ["DRIVERS_TOOLS"]
+        include_expansions_in_env: [DRIVERS_TOOLS, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, AWS_SESSION_TOKEN]
         args:
           - ./.evergreen/run-tests.sh
 
