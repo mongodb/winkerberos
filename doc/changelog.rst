@@ -1,12 +1,22 @@
 Changelog
 =========
 
+Changes in Version 0.13.0
+-------------------------
+
+- Add support for Python 3.13.
+- Drop support for Python 3.9.
+
+
 Changes in Version 0.12.2
 -------------------------
+
 - Add Python 3.13 wheels.
+
 
 Changes in Version 0.12.0
 -------------------------
+
 - Add support for Python 3.13.
 
 
