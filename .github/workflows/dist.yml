@@ -28,12 +28,12 @@ jobs:
       matrix:
         buildplat: ["win_amd64", "win32"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
       - name: Build wheels
-        uses: pypa/cibuildwheel@9e4e50bd76b3190f55304387e333f6234823ea9b # v3.1.2
+        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93 # v3.2.0
         env:
           CIBW_BUILD: "cp3*-${{ matrix.buildplat }}"
           CIBW_PRERELEASE_PYTHONS: "True"
@@ -56,12 +56,12 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # Build sdist on lowest supported Python
           python-version: '3.9'
@@ -83,7 +83,7 @@ jobs:
     name: Download Wheels
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
       - name: Flatten directory
         working-directory: .
         run: |
