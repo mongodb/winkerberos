@@ -29,10 +29,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+        # Note: we do NOT include python because this is a pure C extension.exclude:
+        # See PYTHON-5633.
         - language: c-cpp
           build-mode: manual
-        - language: python
-          build-mode: none
         - language: actions
           build-mode: none
     steps:
