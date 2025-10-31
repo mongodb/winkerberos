@@ -33,7 +33,7 @@ jobs:
           ref: ${{ inputs.ref }}
           persist-credentials: false
       - name: Build wheels
-        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93 # v3.2.0
+        uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c # v3.2.1
         env:
           CIBW_BUILD: "cp3*-${{ matrix.buildplat }}"
           CIBW_PRERELEASE_PYTHONS: "True"
@@ -47,7 +47,7 @@ jobs:
           ls wheelhouse/*cp313*.whl
           ls wheelhouse/*cp314*.whl
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: wheel-${{ matrix.buildplat }}
           path: ./wheelhouse/*.whl
@@ -72,7 +72,7 @@ jobs:
           check-manifest -v
           python -m build --sdist .
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: "sdist"
           path: dist/*.tar.gz
@@ -83,13 +83,13 @@ jobs:
     name: Download Wheels
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
       - name: Flatten directory
         working-directory: .
         run: |
           find . -mindepth 2 -type f -exec mv {} . \;
           find . -type d -empty -delete
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: all-dist-${{ github.run_id }}
           path: "./*"
