@@ -4,7 +4,7 @@ Changelog
 Changes in Version 0.13.0
 -------------------------
 
-- Add support for Python 3.13.
+- Add support for Python 3.14.
 - Drop support for Python 3.9.
 
 
