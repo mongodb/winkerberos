@@ -1,6 +1,33 @@
 Changelog
 =========
 
+Changes in Version 0.13.0
+-------------------------
+
+- Add support for Python 3.14.
+- Drop support for Python 3.9.
+
+
+Changes in Version 0.12.2
+-------------------------
+
+- Add Python 3.13 wheels.
+
+
+Changes in Version 0.12.0
+-------------------------
+
+- Add support for Python 3.13.
+
+
+Changes in Version 0.11.0
+-------------------------
+
+- Drop support for Python version 3.7.
+- Add Secure Software Development Life Cycle automation to release process.
+  GitHub Releases now include a Software Bill of Materials, and signature
+  files corresponding to the distribution files released on PyPI.
+
 Changes in Version 0.10.0
 -------------------------
 

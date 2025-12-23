@@ -5,40 +5,49 @@ on:
     branches: [master]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
   pull_request:
 
 concurrency:
   group: dist-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash -eux {0}
+
 jobs:
   build_wheels:
     name: "Build Wheels ${{ matrix.buildplat }}"
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
         buildplat: ["win_amd64", "win32"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc # v3.3.0
         env:
-          # TODO: change this back to cp3*
-          CIBW_BUILD: "cp38-${{ matrix.buildplat }}"
+          CIBW_BUILD: "cp3*-${{ matrix.buildplat }}"
           CIBW_PRERELEASE_PYTHONS: "True"
           CIBW_TEST_COMMAND: "python -c \"import winkerberos;print(winkerberos.__version__)\""
 
       - name: Assert all versions in wheelhouse
-        if: ${{ ! startsWith(matrix.buildplat[1], 'macos') }}
         run: |
-          ls wheelhouse/*cp38*.whl
-          ls wheelhouse/*cp39*.whl
           ls wheelhouse/*cp310*.whl
           ls wheelhouse/*cp311*.whl
           ls wheelhouse/*cp312*.whl
+          ls wheelhouse/*cp313*.whl
+          ls wheelhouse/*cp314*.whl
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: wheel-${{ matrix.buildplat }}
           path: ./wheelhouse/*.whl
@@ -47,12 +56,15 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # Build sdist on lowest supported Python
-          python-version: '3.8'
+          python-version: '3.10'
 
       - name: Build SDist
         run: |
@@ -60,7 +72,7 @@ jobs:
           check-manifest -v
           python -m build --sdist .
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: "sdist"
           path: dist/*.tar.gz
@@ -71,13 +83,13 @@ jobs:
     name: Download Wheels
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
       - name: Flatten directory
         working-directory: .
         run: |
           find . -mindepth 2 -type f -exec mv {} . \;
           find . -type d -empty -delete
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: all-dist-${{ github.run_id }}
           path: "./*"

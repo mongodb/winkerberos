@@ -13,3 +13,4 @@ winkerberos.egg-info/
 envfile
 .venv
 signatures
+secrets-export.sh
