@@ -28,7 +28,7 @@ jobs:
       matrix:
         buildplat: ["win_amd64", "win32"]
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
@@ -56,12 +56,12 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           # Build sdist on lowest supported Python
           python-version: '3.10'

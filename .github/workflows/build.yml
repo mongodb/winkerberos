@@ -15,12 +15,12 @@ jobs:
   static:
     runs-on: ubuntu-latest
     steps:
-     - uses: actions/checkout@v7.0.0
+     - uses: actions/checkout@v7.0.1
        with:
         persist-credentials: false
         # Lowest supported Python
         python-version: '3.10'
-     - uses: actions/setup-python@v6
+     - uses: actions/setup-python@v7
      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
        with:
          extra_args: --all-files --hook-stage manual
@@ -32,10 +32,10 @@ jobs:
   docs:
     runs-on: windows-latest
     steps:
-     - uses: actions/checkout@v7.0.0
+     - uses: actions/checkout@v7.0.1
        with:
         persist-credentials: false
-     - uses: actions/setup-python@v6
+     - uses: actions/setup-python@v7
        with:
         # Lowest supported Python
         python-version: '3.10'
@@ -56,7 +56,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2
@@ -79,11 +79,11 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
