@@ -66,6 +66,11 @@ jobs:
           # Build sdist on lowest supported Python
           python-version: '3.10'
 
+      - name: Validate pyproject.toml
+        run: |
+          pip install 'validate-pyproject[all]'
+          validate-pyproject pyproject.toml
+
       - name: Build SDist
         run: |
           pip install check-manifest build
@@ -89,6 +94,13 @@ jobs:
         run: |
           find . -mindepth 2 -type f -exec mv {} . \;
           find . -type d -empty -delete
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.10'
+      - name: Check dist metadata
+        run: |
+          pip install twine
+          twine check --strict *.whl *.tar.gz
       - uses: actions/upload-artifact@v7
         with:
           name: all-dist-${{ github.run_id }}
