@@ -85,7 +85,7 @@ tasks:
 buildvariants:
 - name: tests
   display_name: Run Tests
-  run_on: windows-64-vsMulti-small
+  run_on: windows-2022-latest-small
   tasks:
   - name: run-tests
 
