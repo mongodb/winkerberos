@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in Version 0.14.0
+-------------------------
+
+- Drop support for Python 3.10.
+
+
 Changes in Version 0.13.0
 -------------------------
 
