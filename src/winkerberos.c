@@ -104,11 +104,7 @@ _py_unicode_to_wchar(PyObject* obj, WCHAR** out, Py_ssize_t* outlen) {
         PyErr_SetNone(PyExc_MemoryError);
         return FALSE;
     }
-#if PY_VERSION_HEX < 0x03020000
-    res = PyUnicode_AsWideChar((PyUnicodeObject*)obj, buf, len);
-#else
     res = PyUnicode_AsWideChar(obj, buf, len);
-#endif
     if (res == -1) {
         goto fail;
     }
@@ -556,10 +552,7 @@ PyDoc_STRVAR(sspi_channel_bindings_doc,
 "    from cryptography.hazmat.backends import default_backend\n"
 "    from cryptography.hazmat.primitives import hashes\n"
 "\n"
-"    if sys.version_info > (3, 0):\n"
-"        socket = response.raw._fp.fp.raw._sock\n"
-"    else:\n"
-"        socket = response.raw._fp.fp._sock\n"
+"    socket = response.raw._fp.fp.raw._sock\n"
 "    server_certificate = socket.getpeercert(True)\n"
 "    cert = x509.load_der_x509_certificate(server_certificate, default_backend())\n"
 "    hash_algorithm = cert.signature_hash_algorithm\n"
