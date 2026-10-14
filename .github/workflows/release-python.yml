@@ -40,16 +40,16 @@ jobs:
     outputs:
       version: ${{ steps.pre-publish.outputs.version }}
     steps:
-      - uses: mongodb-labs/drivers-github-tools/secure-checkout@4089c3eb27d7a5101d987088c3345013858d65f8  # v3.0.6
+      - uses: mongodb-labs/drivers-github-tools/secure-checkout@11cb3898ea71493d38e8cdea7cc17b44320899e5  # v3.0.7
         with:
           app_id: ${{ vars.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-      - uses: mongodb-labs/drivers-github-tools/setup@4089c3eb27d7a5101d987088c3345013858d65f8  # v3.0.6
+      - uses: mongodb-labs/drivers-github-tools/setup@11cb3898ea71493d38e8cdea7cc17b44320899e5  # v3.0.7
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/pre-publish@4089c3eb27d7a5101d987088c3345013858d65f8  # v3.0.6
+      - uses: mongodb-labs/drivers-github-tools/python/pre-publish@11cb3898ea71493d38e8cdea7cc17b44320899e5  # v3.0.7
         id: pre-publish
         with:
           version: ${{ env.VERSION }}
@@ -77,7 +77,7 @@ jobs:
       id-token: write
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: all-dist-${{ github.run_id }}
           path: dist/
@@ -95,16 +95,16 @@ jobs:
       attestations: write
       security-events: write
     steps:
-      - uses: mongodb-labs/drivers-github-tools/secure-checkout@4089c3eb27d7a5101d987088c3345013858d65f8  # v3.0.6
+      - uses: mongodb-labs/drivers-github-tools/secure-checkout@11cb3898ea71493d38e8cdea7cc17b44320899e5  # v3.0.7
         with:
           app_id: ${{ vars.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-      - uses: mongodb-labs/drivers-github-tools/setup@4089c3eb27d7a5101d987088c3345013858d65f8  # v3.0.6
+      - uses: mongodb-labs/drivers-github-tools/setup@11cb3898ea71493d38e8cdea7cc17b44320899e5  # v3.0.7
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-      - uses: mongodb-labs/drivers-github-tools/python/post-publish@4089c3eb27d7a5101d987088c3345013858d65f8  # v3.0.6
+      - uses: mongodb-labs/drivers-github-tools/python/post-publish@11cb3898ea71493d38e8cdea7cc17b44320899e5  # v3.0.7
         with:
           version: ${{ env.VERSION }}
           version_bump_script: ./.github/scripts/bump-version.sh
