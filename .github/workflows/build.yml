@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        msystem: [MINGW64, MINGW32, UCRT64, CLANG64]
+        msystem: [MINGW64, UCRT64, CLANG64]
     name: Build (${{ matrix.msystem }})
     defaults:
       run:
