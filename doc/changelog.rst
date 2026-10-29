@@ -4,6 +4,7 @@ Changelog
 Changes in Version 0.14.0
 -------------------------
 
+- Add support for Python 3.15.
 - Drop support for Python 3.10.
 
 

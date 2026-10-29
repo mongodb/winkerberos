@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        msystem: [MINGW64, MINGW32, UCRT64, CLANG64]
+        msystem: [MINGW64, UCRT64, CLANG64]
     name: Build (${{ matrix.msystem }})
     defaults:
       run:
@@ -76,7 +76,7 @@ jobs:
     name: Build MSVC
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
       fail-fast: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
