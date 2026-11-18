@@ -68,22 +68,31 @@ destroy_sspi_server_state(sspi_server_state* state) {
 
 VOID
 set_gsserror(DWORD errCode, const SEC_CHAR* msg) {
-    SEC_CHAR* err = NULL;
+    /* Fetch the system message as UTF-16. FormatMessageA returns it in the
+       ANSI code page (e.g. cp1252 on German Windows), but PyErr_Format
+       decodes %s as UTF-8, so every non-ASCII character became U+FFFD. */
+    WCHAR* err = NULL;
+    PyObject* text = NULL;
     DWORD status;
     DWORD flags = (FORMAT_MESSAGE_ALLOCATE_BUFFER |
                    FORMAT_MESSAGE_FROM_SYSTEM |
                    FORMAT_MESSAGE_IGNORE_INSERTS);
-    status = FormatMessageA(flags,
+    status = FormatMessageW(flags,
                             NULL,
                             errCode,
                             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                            (LPTSTR)&err,
+                            (LPWSTR)&err,
                             0,
                             NULL);
     if (status) {
-        PyErr_Format(GSSError, "SSPI: %s: %s", msg, err);
+        text = PyUnicode_FromWideChar(err, (Py_ssize_t)status);
         LocalFree(err);
+    }
+    if (text != NULL) {
+        PyErr_Format(GSSError, "SSPI: %s: %U", msg, text);
+        Py_DECREF(text);
     } else {
+        PyErr_Clear();
         PyErr_Format(GSSError, "SSPI: %s", msg);
     }
 }

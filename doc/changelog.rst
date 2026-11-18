@@ -6,6 +6,9 @@ Changes in Version 0.14.0
 
 - Add support for Python 3.15.
 - Drop support for Python 3.10.
+- Fix garbled SSPI error messages on non-English Windows. The system message
+  is now retrieved as UTF-16 (``FormatMessageW``) instead of in the ANSI code
+  page, so characters like German umlauts are no longer replaced by U+FFFD.
 
 
 Changes in Version 0.13.0

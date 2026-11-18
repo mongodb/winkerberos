@@ -280,3 +280,38 @@ class TestWinKerberos(unittest.TestCase):
     def test_exception_hierarchy(self):
         self.assertIsInstance(kerberos.KrbError(), Exception)
         self.assertIsInstance(kerberos.GSSError(), kerberos.KrbError)
+
+
+class TestErrorMessages(unittest.TestCase):
+    """Needs neither MongoDB nor a KDC, unlike TestWinKerberos."""
+
+    def test_error_message_matches_system_text(self):
+        # The system message is localized. FormatMessageA returned it in the
+        # ANSI code page, which PyErr_Format decoded as UTF-8, so non-ASCII
+        # characters became U+FFFD on non-English Windows (#174). A Kerberos
+        # step against a domain that does not exist fails without a KDC.
+        import ctypes
+
+        _, ctx = kerberos.authGSSClientInit(
+            "HTTP@winkerberos-test.invalid",
+            principal=None,
+            user="nobody",
+            domain="WINKERBEROS-TEST.INVALID",
+            password="x",
+            mech_oid=kerberos.GSS_MECH_OID_KRB5,
+        )
+        with self.assertRaises(kerberos.GSSError) as cm:
+            kerberos.authGSSClientStep(ctx, "")
+        message = str(cm.exception)
+
+        self.assertNotIn("\ufffd", message)
+        candidates = (
+            0x80090311,  # SEC_E_NO_AUTHENTICATING_AUTHORITY
+            0x80090303,  # SEC_E_TARGET_UNKNOWN
+            0x8009030E,  # SEC_E_NO_CREDENTIALS
+            0x8009030C,  # SEC_E_LOGON_DENIED
+            0x80090308,  # SEC_E_INVALID_TOKEN
+        )
+        # ctypes.FormatError takes a signed int; the HRESULT bits are the same.
+        expected = [ctypes.FormatError(code - (1 << 32)).strip() for code in candidates]
+        self.assertTrue(any(text in message for text in expected), message)
